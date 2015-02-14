@@ -1,0 +1,72 @@
+body, html {
+    background: black;
+    padding: 0;
+    margin: 0;
+}
+
+.ground {
+    background: #151515;
+    bottom: 0;
+    width: 19px;
+    box-shadow: 0px -6px 0px rgba(0,0,0,0.5);
+    position: absolute;
+}
+
+#player {
+    width: 100vw;
+    background: #111;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    transition: background-color .3s;
+}
+
+#dino {
+    position: absolute;
+    left: 87px;
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    background: white;
+    bottom: 100px;
+    border-bottom: solid 10px;
+    display: none;
+    transition: width 1s;
+}
+
+#gameover,
+#score,
+#splash,
+#topscore {
+    position: absolute;
+    text-align: center;
+    color: white;
+    width: 100%;
+    font-family: sans-serif;
+}
+
+#gameover {
+    display: none;
+    top: 30vh;
+    font-size: 12vmin;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black,
+        0px 4px 0px rgba(0, 0, 0, 0.5), 0px 5px 0px rgba(0, 0, 0, 0.5), 0px 6px 0px rgba(0, 0, 0, 0.5);
+}
+
+#score {
+    top: 5vh;
+    font-size: 5vmin;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+}
+
+#topscore {
+    top: 2vh;
+    font-size: 3vmin;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+}
+
+#splash {
+    top: 50vh;
+    font-size: 8vmin;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+}
