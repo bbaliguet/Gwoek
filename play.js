@@ -11,20 +11,19 @@ var ground = [],
 	playerOnFloor = true,
 
 	gameOver = true,
-	now = window.performance.now(),
-	delta = 0,
+
+	now,
+	delta,
 
 	score = 0,
 	topScore = 0,
 
 	loop = function () {
 		var swap = false;
-		var previous = now;
-		now  = window.performance.now();
-		var delta = (now - previous) / (1000/60);
 
+		updateClock();
 
-		if (shift == tileWidth) {
+		if (shift >= tileWidth) {
 			shift = 0;
 			swap = true;
 		}
@@ -65,8 +64,9 @@ var ground = [],
 		var playerTile = ground[5],
 			target = playerTile.height,
 			diff = playerBottom - target,
-			dino = document.getElementById("dino")
-		absoluteDiff = diff < 0 ? -diff : diff;
+			dino = document.getElementById("dino"),
+			absoluteDiff = diff < 0 ? -diff : diff;
+	
 		if (absoluteDiff < 20 && playerOnFloor) {
 			playerBottom = target;
 			playerAcceleration = 0;
@@ -101,6 +101,19 @@ var ground = [],
 
 		requestAnimationFrame(loop);
 	},
+
+	updateClock = function () {
+		var previous = now;
+
+		if (now) {
+			now  = window.performance.now();
+			delta = (now - previous) / (1000/60);
+		} else {
+			now  = window.performance.now();
+			delta = 1;
+		}
+	},
+
 	init = function () {
 		var player = document.getElementById("player");
 		document.getElementById("gameover").style.display = "none";
@@ -124,6 +137,10 @@ var ground = [],
 		playerBottom = 100;
 		playerOnFloor = true;
 		score = 0;
+
+		// init clock 
+		now = 0;
+		delta = 1;
 	};
 
 // event listener
