@@ -120,7 +120,7 @@ var ground = [],
 	};
 
 // event listener
-document.addEventListener("keydown", function () {
+var onAction = function () {
 	if (gameOver) {
 		init();
 		requestAnimationFrame(loop);
@@ -143,4 +143,7 @@ document.addEventListener("keydown", function () {
 	var color = Math.floor(Math.random() * 360),
 		light = darkColor ? "80%" : "7%";
 	document.getElementById("player").style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
-});
+};
+
+document.addEventListener("keydown", onAction);
+document.addEventListener("touchstart", onAction);
