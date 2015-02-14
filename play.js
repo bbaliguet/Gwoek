@@ -175,3 +175,7 @@ document.addEventListener("touchstart", function (e) {
 	e.preventDefault();
 	onAction();
 });
+// update on resize
+window.addEventListener("resize", function () {
+	init();
+});
