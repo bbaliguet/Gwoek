@@ -11,12 +11,19 @@ var ground = [],
 	playerOnFloor = true,
 
 	gameOver = true,
+	now = window.performance.now(),
+	delta = 0,
 
 	score = 0,
 	topScore = 0,
 
 	loop = function () {
 		var swap = false;
+		var previous = now;
+		now  = window.performance.now();
+		var delta = (now - previous) / (1000/60);
+
+
 		if (shift == tileWidth) {
 			shift = 0;
 			swap = true;
