@@ -13,9 +13,9 @@ body, html {
 }
 
 #player {
-    width: 100vw;
+    width: 100%;
     background: hsl(0, 0%, 80%);
-    height: 100vh;
+    height: 100%;
     position: relative;
     overflow: hidden;
     transition: background-color .3s;
