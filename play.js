@@ -29,6 +29,7 @@ var ground = [],
 			shift = 0;
 			swap = true;
 		}
+
 		// adjust ground
 		ground.forEach(function (item, index) {
 			var tile = item.tile;
@@ -77,7 +78,7 @@ var ground = [],
 		} else if (diff > 0) {
 			playerAcceleration = playerAcceleration + delta;
 			playerBottom = playerBottom - (delta * playerAcceleration);
-			if (playerBottom < target) {
+			if (playerBottom - target < 3) {
 				playerBottom = target;
 				playerOnFloor = true;
 				playerDblJump = false;
@@ -99,7 +100,7 @@ var ground = [],
 
 		// adjust score
 		score++;
-		if (score % 200 === 0) {
+		if (score % 100 === 0) {
 			noVaryBase = noVaryBase * 0.8;
 			withVariationBase += 0.05;
 		}
