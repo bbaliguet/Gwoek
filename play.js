@@ -100,6 +100,7 @@ var ground = [],
 		document.getElementById("splash").style.display = "none";
 		document.getElementById("dino").style.display = "block";
 		// init ground
+		nbTiles = Math.floor(document.body.getBoundingClientRect().width / 20) + 2;
 		player.innerHTML = "";
 		ground.splice(0, ground.length);
 		for (var i = 0; i < nbTiles; i++) {
@@ -149,4 +150,4 @@ document.addEventListener("keydown", onAction);
 document.addEventListener("touchstart", function (e) {
 	e.preventDefault();
 	onAction();
-);
+});
