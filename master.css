@@ -14,7 +14,7 @@ body, html {
 
 #player {
     width: 100vw;
-    background: #111;
+    background: hsl(0, 0%, 80%);
     height: 100vh;
     position: relative;
     overflow: hidden;

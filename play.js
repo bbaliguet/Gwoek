@@ -3,7 +3,7 @@ var ground = [],
 	tileWidth = 20,
 	shift = 0,
 	noVary = false,
-	darkColor = false,
+	darkColor = true,
 
 	playerDblJump = false,
 	playerAcceleration = 0,
@@ -67,7 +67,7 @@ var ground = [],
 			diff = playerBottom - target,
 			dino = document.getElementById("dino")
 		absoluteDiff = diff < 0 ? -diff : diff;
-		if (absoluteDiff < 5) {
+		if (absoluteDiff < 20 && playerOnFloor) {
 			playerBottom = target;
 			playerAcceleration = 0;
 			playerOnFloor = true;
