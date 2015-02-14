@@ -146,4 +146,7 @@ var onAction = function () {
 };
 
 document.addEventListener("keydown", onAction);
-document.addEventListener("touchstart", onAction);
+document.addEventListener("touchstart", function (e) {
+	e.preventDefault();
+	onAction();
+);
