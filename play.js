@@ -59,7 +59,7 @@ var ground = [],
 				tile.style.height = item.height + "px";
 			}
 		});
-		shift = shift + 10;
+		shift = shift + (10 * delta);
 
 		// adjust player on 5th tile
 		var playerTile = ground[5],
@@ -73,8 +73,8 @@ var ground = [],
 			playerOnFloor = true;
 			playerDblJump = false;
 		} else if (diff > 0) {
-			playerAcceleration++;
-			playerBottom = playerBottom - playerAcceleration;
+			playerAcceleration = playerAcceleration + delta;
+			playerBottom = playerBottom - (delta * playerAcceleration);
 			if (playerBottom < target) {
 				playerBottom = target;
 				playerOnFloor = true;
