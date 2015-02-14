@@ -17,6 +17,8 @@ var ground = [],
 
 	score = 0,
 	topScore = 0,
+	noVaryBase = 10,
+	withVariationBase = 0.1,
 
 	loop = function () {
 		var swap = false;
@@ -35,12 +37,12 @@ var ground = [],
 				if (index < nbTiles - 1) {
 					item.height = ground[index + 1].height;
 				} else {
-					if (!noVary) {
+					if (!noVary || noVary < 0) {
 						noVary = false;
 					} else {
 						noVary--;
 					}
-					var withVariation = !noVary && Math.random() < 0.1,
+					var withVariation = !noVary && Math.random() < withVariationBase,
 						variation = withVariation ? 200 : 4,
 						diff = -variation / 2 + Math.random() * variation;
 					// make sure gap is a real gap
@@ -51,7 +53,7 @@ var ground = [],
 							diff -= 20;
 						}
 						// no variation for 10 cycles
-						noVary = 10;
+						noVary = noVaryBase;
 					}
 					item.height = Math.max(Math.min(item.height + diff, 300), 50);
 				}
@@ -66,7 +68,7 @@ var ground = [],
 			diff = playerBottom - target,
 			dino = document.getElementById("dino"),
 			absoluteDiff = diff < 0 ? -diff : diff;
-	
+
 		if (absoluteDiff < 20 && playerOnFloor) {
 			playerBottom = target;
 			playerAcceleration = 0;
@@ -97,6 +99,10 @@ var ground = [],
 
 		// adjust score
 		score++;
+		if (score % 200 === 0) {
+			noVaryBase = noVaryBase * 0.8;
+			withVariationBase += 0.05;
+		}
 		document.getElementById("score").innerHTML = "score: " + score;
 
 		requestAnimationFrame(loop);
@@ -106,10 +112,10 @@ var ground = [],
 		var previous = now;
 
 		if (now) {
-			now  = window.performance.now();
-			delta = (now - previous) / (1000/60);
+			now = window.performance.now();
+			delta = (now - previous) / (1000 / 60);
 		} else {
-			now  = window.performance.now();
+			now = window.performance.now();
 			delta = 1;
 		}
 	},
@@ -138,8 +144,10 @@ var ground = [],
 		playerBottom = 100;
 		playerOnFloor = true;
 		score = 0;
+		noVaryBase = 10;
+		withVariationBase = 0.1;
 
-		// init clock 
+		// init clock
 		now = 0;
 		delta = 1;
 	};
