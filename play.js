@@ -26,7 +26,7 @@ var ground = [],
 		updateClock();
 
 		if (shift >= tileWidth) {
-			shift = 0;
+			shift = Math.round(shift) % tileWidth;
 			swap = true;
 		}
 
@@ -59,10 +59,11 @@ var ground = [],
 					item.height = Math.max(Math.min(item.height + diff, 300), 50);
 				}
 				var adjust = 1;
-				if (index > nbTiles * 4/5) {
+				if (index > nbTiles * 4 / 5) {
 					adjust = (nbTiles - index) / (nbTiles / 5);
 				}
 				tile.style.height = adjust * item.height + "px";
+				tile.style.opacity = .5 + adjust / 2;
 			}
 		});
 		shift = shift + (10 * delta);
@@ -90,9 +91,11 @@ var ground = [],
 		} else {
 			// GAME OVER
 			gameOver = true;
+			ga('send', 'event', 'score', 'session', 'Score', score);
 			if (score > topScore) {
 				topScore = score;
 				document.getElementById("topscore").innerHTML = "Top score: " + topScore;
+				ga('send', 'event', 'score', 'top', 'Top score', topScore);
 			}
 			dino.style.transform = "scale(1)";
 			document.getElementById("gameover").style.display = "block";
@@ -124,10 +127,10 @@ var ground = [],
 		var previous = now;
 
 		if (now) {
-			now = window.performance.now();
+			now = Date.now();
 			delta = (now - previous) / (1000 / 60);
 		} else {
-			now = window.performance.now();
+			now = Date.now();
 			delta = 1;
 		}
 	},
