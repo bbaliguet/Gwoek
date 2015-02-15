@@ -8,6 +8,7 @@ var ground = [],
 
 	shift = 0,
 	noVary = false,
+	newLevel = 200,
 	darkColor = false,
 
 	playerDblJump = false,
@@ -143,9 +144,12 @@ var ground = [],
 
 		// adjust score
 		score = score + delta;
-		if (score % 100 === 0) {
+		if (newLevel < 0) {
+			newLevel = 200;
 			noVaryBase = noVaryBase * 0.8;
 			withVariationBase += 0.05;
+		} else {
+			newLevel = newLevel - delta;
 		}
 
 		// adjust sprite
