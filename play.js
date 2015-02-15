@@ -219,22 +219,25 @@ var onAction = function () {
 		gameOver = false;
 		return;
 	}
-	if (!playerOnFloor && playerDblJump || gameOver) {
-		return;
-	}
-	if (playerOnFloor) {
-		playerOnFloor = false;
-		playerAcceleration = -20;
-		playerBottom += 10;
+	if (!playerOnFloor && playerDblJump) {
+		if (playerAcceleration > 0) {
+			playerAcceleration = -1;
+		}
 	} else {
-		playerDblJump = true;
-		playerAcceleration = -15;
-		if (darkColor || Math.random() < 0.5) {
-			darkColor = !darkColor;
-			if (darkColor) {
-				document.body.classList.add("dark");
-			} else {
-				document.body.classList.remove("dark");
+		if (playerOnFloor) {
+			playerOnFloor = false;
+			playerAcceleration = -20;
+			playerBottom += 10;
+		} else {
+			playerDblJump = true;
+			playerAcceleration = -15;
+			if (darkColor || Math.random() < 0.5) {
+				darkColor = !darkColor;
+				if (darkColor) {
+					document.body.classList.add("dark");
+				} else {
+					document.body.classList.remove("dark");
+				}
 			}
 		}
 	}
