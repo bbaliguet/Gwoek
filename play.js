@@ -1,10 +1,9 @@
 var ground = [],
+	nbTiles = 100,
+	tileWidth = 20,
 
 	clouds = [],
 	cloudsCoolDown = 0,
-
-	nbTiles = 100,
-	tileWidth = 20,
 
 	shift = 0,
 	noVary = false,
@@ -263,7 +262,7 @@ var onAction = function () {
 	// generate a random color
 	var color = Math.floor(Math.random() * 360),
 		light = darkColor ? "7%" : "80%";
-	document.getElementById("player").style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
 };
 
 document.addEventListener("keydown", onAction);

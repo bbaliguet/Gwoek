@@ -4,13 +4,17 @@ body, html {
     margin: 0;
 }
 
+body {
+    background: hsl(0, 0%, 80%);
+    transition: background-color .3s;
+}
+
 .ground {
     background: #151515;
     bottom: 0;
     width: 19px;
     box-shadow: 0px -6px 0px rgba(0,0,0,0.5);
     position: absolute;
-    z-index: 10;
 }
 
 .cloud {
@@ -32,11 +36,9 @@ body, html {
 
 #player {
     width: 100%;
-    background: hsl(0, 0%, 80%);
     height: 100%;
     position: relative;
     overflow: hidden;
-    transition: background-color .3s;
 }
 
 #dino {
