@@ -26,22 +26,26 @@ var ground = [],
 
 	score = 0,
 	topScore = 0,
-	
+
 	// limits for random ground generation
 	noVaryBase = 10,
 	withVariationBase = 0.1,
 	topLimit = 300,
 	bottomLimit = 20,
-	
+
 	// some dom elements
 	_environment = document.getElementById("environment"),
 	_dino = document.getElementById("dino"),
 	_score = document.getElementById("score"),
-	
+
 	// dom helpers
-	setVisible = function(id, visible) {
+	setVisible = function (id, visible) {
 		document.getElementById(id).style.display = visible ? "block" : "none";
 	},
+
+	// random generator
+	seed = 0,
+	rand = null,
 
 	loop = function () {
 		var swap = false;
@@ -71,9 +75,9 @@ var ground = [],
 					} else {
 						noVary--;
 					}
-					var withVariation = !noVary && Math.random() < withVariationBase,
+					var withVariation = !noVary && rand() < withVariationBase,
 						variation = withVariation ? 200 : 4,
-						diff = -variation / 2 + Math.random() * variation;
+						diff = -variation / 2 + rand() * variation;
 					// make sure gap is a real gap
 					if (withVariation) {
 						if (diff > 0) {
@@ -218,7 +222,7 @@ var ground = [],
 		setVisible("splash", false);
 		setVisible("dino", true);
 		viewport = document.body.getBoundingClientRect();
-		
+
 		// init ground
 		nbTiles = Math.floor(viewport.width / 20) + 2;
 		_environment.innerHTML = "";
@@ -232,10 +236,10 @@ var ground = [],
 			tile.classList.add("ground");
 			_environment.appendChild(tile);
 		}
-		
+
 		// init clouds
 		clouds.splice(0, clouds.length);
-		
+
 		// init player
 		playerDblJump = false;
 		playerAcceleration = 0;
@@ -250,6 +254,14 @@ var ground = [],
 		// init clock
 		now = 0;
 		delta = 1;
+
+		// init rand method. Use seed if provided
+		var hash = parseInt(window.location.hash.substr(1), 10);
+		seed = isNaN(hash) ? Math.floor(Math.random() * 100000000) : hash;
+		var generator = new MersenneTwister(seed);
+		rand = function () {
+			return generator.random();
+		};
 	};
 
 // event listener
