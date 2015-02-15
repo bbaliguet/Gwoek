@@ -25,8 +25,8 @@ body, html {
     position: absolute;
     left: 87px;
     width: 14px;
-    height: 22px;
-    background: url(Gwoek.png);
+    height: 27px;
+    background: url(Gwoek.png) no-repeat;
     bottom: 100px;
     display: none;
 }

@@ -110,8 +110,8 @@ var ground = [],
 		}
 
 		// adjust sprite
-		if (score % 10 < 5) {
-			dino.style.backgroundPosition = "14px 0px";
+		if (score % 20 < 10) {
+			dino.style.backgroundPosition = "-14px 0px";
 		} else {
 			dino.style.backgroundPosition = "0px 0px";
 		}
