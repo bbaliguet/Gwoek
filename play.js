@@ -33,6 +33,11 @@ var ground = [],
 
 		updateClock();
 
+		if (shift > tileWidth * 3) {
+			// cheating !
+			gameOver = true;
+		}
+
 		if (shift >= tileWidth) {
 			shift = Math.round(shift) % tileWidth;
 			swap = true;
@@ -109,12 +114,12 @@ var ground = [],
 			dino = document.getElementById("dino"),
 			absoluteDiff = diff < 0 ? -diff : diff;
 
-		if (playerTile && absoluteDiff < 20 && playerOnFloor) {
+		if (!gameOver && playerTile && absoluteDiff < 20 && playerOnFloor) {
 			playerBottom = target;
 			playerAcceleration = 0;
 			playerOnFloor = true;
 			playerDblJump = false;
-		} else if (playerTile && diff > 0) {
+		} else if (!gameOver && playerTile && diff > 0) {
 			playerAcceleration = playerAcceleration + delta;
 			playerBottom = playerBottom - (delta * playerAcceleration);
 			if (playerBottom - target < 3) {
@@ -124,7 +129,7 @@ var ground = [],
 			}
 		} else {
 			playerHorizontalAcceleration = -8;
-			if (!playerTile) {
+			if (!playerTile || gameOver) {
 				// GAME OVER
 				gameOver = true;
 				score = Math.floor(score);
