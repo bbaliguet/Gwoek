@@ -5,6 +5,8 @@ var ground = [],
 	clouds = [],
 	cloudsCoolDown = 0,
 
+	// game variables
+	gameOver = true,
 	shift = 0,
 	noVary = false,
 	newLevel = 200,
@@ -17,23 +19,33 @@ var ground = [],
 	playerLeft = 120,
 	playerOnFloor = true,
 
-	gameOver = true,
-
 	now,
 	delta,
 	viewport,
 
 	score = 0,
 	topScore = 0,
+	
+	// limits for random ground generation
 	noVaryBase = 10,
 	withVariationBase = 0.1,
+	
+	// some dom elements
+	_environment = document.getElementById("environment"),
+	_dino = document.getElementById("dino"),
+	_score = document.getElementById("score"),
+	
+	// dom helpers
+	setVisible = function(id, visible) {
+		document.getElementById(id).style.display = visible ? "block" : "none";
+	},
 
 	loop = function () {
 		var swap = false;
 
 		updateClock();
 
-		if (shift > tileWidth * 3) {
+		if (shift > tileWidth * 10) {
 			// cheating !
 			gameOver = true;
 		}
@@ -83,13 +95,14 @@ var ground = [],
 
 		// adjust clouds
 		if (!cloudsCoolDown) {
+			// can create new cloud
 			cloudsCoolDown = false;
 			if (Math.random() < 0.5) {
 				cloudsCoolDown = 150;
 				var cloud = document.createElement("div");
 				cloud.classList.add("cloud");
 				cloud.style.bottom = Math.floor((viewport.height - 350) * Math.random()) + 325;
-				document.getElementById("player").appendChild(cloud);
+				_environment.appendChild(cloud);
 				clouds.push({
 					cloud: cloud,
 					left: viewport.width
@@ -98,6 +111,7 @@ var ground = [],
 		} else {
 			cloudsCoolDown--;
 		}
+		// adjuste cloud position
 		clouds.forEach(function (cloud) {
 			cloud.left -= delta * 2;
 			cloud.cloud.style.left = cloud.left;
@@ -111,7 +125,6 @@ var ground = [],
 		var playerTile = ground[Math.floor((playerLeft + 14) / tileWidth)],
 			target = playerTile ? playerTile.height : 0,
 			diff = playerBottom - target,
-			dino = document.getElementById("dino"),
 			absoluteDiff = diff < 0 ? -diff : diff;
 
 		if (!gameOver && playerTile && absoluteDiff < 20 && playerOnFloor) {
@@ -139,9 +152,9 @@ var ground = [],
 					document.getElementById("topscore").innerHTML = "Top score: " + topScore;
 					ga('send', 'event', 'score', 'top', 'Top score', topScore);
 				}
-				dino.style.transform = "scale(1)";
-				document.getElementById("gameover").style.display = "block";
-				document.getElementById("dino").style.display = "none";
+				_dino.style.transform = "scale(1)";
+				setVisible("gameover", true);
+				setVisible("dino", false);
 				document.body.classList.add("gameover");
 				document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
 					score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
@@ -155,14 +168,14 @@ var ground = [],
 		if (playerHorizontalAcceleration > 1) {
 			playerHorizontalAcceleration = 1;
 		}
-		playerLeft += playerHorizontalAcceleration;
+		playerLeft += playerHorizontalAcceleration * delta;
 		if (playerLeft > 120) {
 			playerLeft = 120;
 		}
 		var scale = playerOnFloor ? 1 : 1 + 1 / (Math.abs(playerAcceleration / 20) + 1);
-		dino.style.bottom = playerBottom + "px";
-		dino.style.left = playerLeft + "px";
-		dino.style.transform = "scale(" + scale + ")";
+		_dino.style.bottom = playerBottom + "px";
+		_dino.style.left = playerLeft + "px";
+		_dino.style.transform = "scale(" + scale + ")";
 
 		// adjust score
 		score = score + delta;
@@ -176,21 +189,20 @@ var ground = [],
 
 		// adjust sprite
 		if (score % 14 < 7) {
-			dino.style.backgroundPosition = "-14px 0px";
+			_dino.style.backgroundPosition = "-14px 0px";
 		} else {
-			dino.style.backgroundPosition = "0px 0px";
+			_dino.style.backgroundPosition = "0px 0px";
 		}
-		document.getElementById("score").innerHTML = "score: " + Math.floor(score);
+		_score.innerHTML = "score: " + Math.floor(score);
 
 		requestAnimationFrame(loop);
 	},
 
 	updateClock = function () {
 		var previous = now;
-
 		if (now) {
 			now = Date.now();
-			delta = (now - previous) / (1000 / 60);
+			delta = (now - previous) * 60 / 1000;
 		} else {
 			now = Date.now();
 			delta = 1;
@@ -198,15 +210,14 @@ var ground = [],
 	},
 
 	init = function () {
-		var player = document.getElementById("player");
 		document.body.classList.remove("gameover");
-		document.getElementById("gameover").style.display = "none";
-		document.getElementById("splash").style.display = "none";
-		document.getElementById("dino").style.display = "block";
+		setVisible("gameover", false);
+		setVisible("splash", false);
+		setVisible("dino", true);
 		viewport = document.body.getBoundingClientRect();
 		// init ground
 		nbTiles = Math.floor(viewport.width / 20) + 2;
-		player.innerHTML = "";
+		_environment.innerHTML = "";
 		ground.splice(0, ground.length);
 		for (var i = 0; i < nbTiles; i++) {
 			var tile = document.createElement("div");
@@ -215,13 +226,14 @@ var ground = [],
 				tile: tile
 			});
 			tile.classList.add("ground");
-			player.appendChild(tile);
+			_environment.appendChild(tile);
 		}
 		// init clouds
 		clouds.splice(0, clouds.length);
 		// init player
 		playerDblJump = false;
 		playerAcceleration = 0;
+		playerHorizontalAcceleration = 0;
 		playerBottom = 100;
 		playerOnFloor = true;
 		score = 0;
@@ -256,10 +268,11 @@ var onAction = function () {
 			playerAcceleration = -15;
 			if (darkColor || Math.random() < 0.5) {
 				darkColor = !darkColor;
+				var classList = document.body.classList;
 				if (darkColor) {
-					document.body.classList.add("dark");
+					classList.add("dark");
 				} else {
-					document.body.classList.remove("dark");
+					classList.remove("dark");
 				}
 			}
 		}

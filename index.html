@@ -3,8 +3,10 @@
         <title>Gwoek</title>
         <link rel="stylesheet" href="master.css" media="screen" charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="description" content="HTML5 vanillajs platform jump game">
         <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
         
+        <!-- favicon crazyness -->
         <link rel="apple-touch-icon" sizes="57x57" href="/Gwoek/apple-touch-icon-57x57.png">
         <link rel="apple-touch-icon" sizes="60x60" href="/Gwoek/apple-touch-icon-60x60.png">
         <link rel="apple-touch-icon" sizes="72x72" href="/Gwoek/apple-touch-icon-72x72.png">
@@ -26,9 +28,11 @@
         <meta name="theme-color" content="#ffffff">
     </head>
     <body>
+        <!-- the game itself -->
         <div id="dino"></div>
-        <div id="player">
-        </div>
+        <div id="environment"></div>
+        
+        <!-- various messages -->
         <div id="gameover">
             GAME OVER!
             <a id="twitter">Share score on twitter</a>
@@ -38,8 +42,14 @@
         <div id="topscore">
         </div>
         <div id="splash">
-            Press any key to start.
+            <h2>Gwoek</h2>
+            Press any key / touch to start.<br/>
+            Press a key / touch to jump.<br/>
+            Again for double jump.<br/>
+            Keep pressing / touching to slow down the fall.
         </div>
+        
+        <!-- scripts and analytics -->
         <script src="play.js"></script>
         <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
