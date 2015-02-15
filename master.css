@@ -53,10 +53,6 @@ body, html {
     box-shadow: 0px 0px 50px rgba(256, 256, 256, 0.5);
 }
 
-.gameover #dino {
-    z-index: 10;
-}
-
 #gameover,
 #score,
 #splash,

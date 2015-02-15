@@ -13,7 +13,9 @@ var ground = [],
 
 	playerDblJump = false,
 	playerAcceleration = 0,
+	playerHorizontalAcceleration = 0,
 	playerBottom = 100,
+	playerLeft = 120,
 	playerOnFloor = true,
 
 	gameOver = true,
@@ -101,19 +103,19 @@ var ground = [],
 			return cloud.left > -200;
 		});
 
-		// adjust player on 5th tile
-		var playerTile = ground[7],
-			target = playerTile.height,
+		// adjust player on its tile
+		var playerTile = ground[Math.floor(playerLeft / tileWidth)],
+			target = playerTile ? playerTile.height : 0,
 			diff = playerBottom - target,
 			dino = document.getElementById("dino"),
 			absoluteDiff = diff < 0 ? -diff : diff;
 
-		if (absoluteDiff < 20 && playerOnFloor) {
+		if (playerTile && absoluteDiff < 20 && playerOnFloor) {
 			playerBottom = target;
 			playerAcceleration = 0;
 			playerOnFloor = true;
 			playerDblJump = false;
-		} else if (diff > 0) {
+		} else if (playerTile && diff > 0) {
 			playerAcceleration = playerAcceleration + delta;
 			playerBottom = playerBottom - (delta * playerAcceleration);
 			if (playerBottom - target < 3) {
@@ -122,24 +124,40 @@ var ground = [],
 				playerDblJump = false;
 			}
 		} else {
-			// GAME OVER
-			gameOver = true;
-			score = Math.floor(score);
-			ga('send', 'event', 'score', 'session', 'Score', score);
-			if (score > topScore) {
-				topScore = score;
-				document.getElementById("topscore").innerHTML = "Top score: " + topScore;
-				ga('send', 'event', 'score', 'top', 'Top score', topScore);
+			playerHorizontalAcceleration = -8;
+			if (!playerTile) {
+				// GAME OVER
+				gameOver = true;
+				score = Math.floor(score);
+				ga('send', 'event', 'score', 'session', 'Score', score);
+				if (score > topScore) {
+					topScore = score;
+					document.getElementById("topscore").innerHTML = "Top score: " + topScore;
+					ga('send', 'event', 'score', 'top', 'Top score', topScore);
+				}
+				dino.style.transform = "scale(1)";
+				document.getElementById("gameover").style.display = "block";
+				document.getElementById("dino").style.display = "none";
+				document.body.classList.add("gameover");
+				document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
+					score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
+				return;
+			} else {
+				playerBottom = ground[Math.floor(playerLeft / tileWidth)].height;
 			}
-			dino.style.transform = "scale(1)";
-			document.getElementById("gameover").style.display = "block";
-			document.body.classList.add("gameover");
-			document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
-				score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
-			return;
+		}
+		// adjust player left
+		playerHorizontalAcceleration += delta / 3;
+		if (playerHorizontalAcceleration > 1) {
+			playerHorizontalAcceleration = 1;
+		}
+		playerLeft += playerHorizontalAcceleration;
+		if (playerLeft > 120) {
+			playerLeft = 120;
 		}
 		var scale = playerOnFloor ? 1 : 1 + 1 / (Math.abs(playerAcceleration / 20) + 1);
 		dino.style.bottom = playerBottom + "px";
+		dino.style.left = playerLeft + "px";
 		dino.style.transform = "scale(" + scale + ")";
 
 		// adjust score
@@ -203,6 +221,7 @@ var ground = [],
 		playerBottom = 100;
 		playerOnFloor = true;
 		score = 0;
+		playerLeft = 120;
 		noVaryBase = 10;
 		withVariationBase = 0.1;
 
