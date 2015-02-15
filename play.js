@@ -99,6 +99,8 @@ var ground = [],
 			}
 			dino.style.transform = "scale(1)";
 			document.getElementById("gameover").style.display = "block";
+			document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
+				score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
 			return;
 		}
 		var scale = playerOnFloor ? 1 : 1 + 1 / (Math.abs(playerAcceleration / 20) + 1);

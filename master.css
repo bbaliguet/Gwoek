@@ -53,17 +53,25 @@ body, html {
 #score {
     top: 5vh;
     font-size: 5vmin;
-    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px rgba(0, 0, 0, 0.5), 0px 3px 0px rgba(0, 0, 0, 0.5);
 }
 
 #topscore {
     top: 2vh;
     font-size: 3vmin;
-    text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px rgba(0, 0, 0, 0.5), 0px 3px 0px rgba(0, 0, 0, 0.5);
 }
 
 #splash {
     top: 50vh;
     font-size: 8vmin;
     text-shadow: 0px 1px 0px black, 0px 2px 0px black, 0px 3px 0px black;
+}
+
+#twitter {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-size: 4vmin;
+    text-shadow: 0px 1px 0px black, 0px 2px 0px black;
 }
