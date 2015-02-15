@@ -61,8 +61,6 @@ var ground = [],
 				var adjust = 1;
 				if (index > nbTiles * 4/5) {
 					adjust = (nbTiles - index) / (nbTiles / 5);
-				} else if (index < 5){
-					adjust = 1 - (5 - index) / 4;
 				}
 				tile.style.height = adjust * item.height + "px";
 			}
