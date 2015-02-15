@@ -103,7 +103,7 @@ var ground = [],
 		});
 
 		// adjust player on its tile
-		var playerTile = ground[Math.floor(playerLeft / tileWidth)],
+		var playerTile = ground[Math.floor(playerLeft + 14 / tileWidth)],
 			target = playerTile ? playerTile.height : 0,
 			diff = playerBottom - target,
 			dino = document.getElementById("dino"),
@@ -142,7 +142,7 @@ var ground = [],
 					score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
 				return;
 			} else {
-				playerBottom = ground[Math.floor(playerLeft / tileWidth)].height;
+				playerBottom = playerTile.height;
 			}
 		}
 		// adjust player left
