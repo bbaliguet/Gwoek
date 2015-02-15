@@ -7,6 +7,7 @@ var ground = [],
 
 	// game variables
 	gameOver = true,
+	withSplash = true,
 	shift = 0,
 	noVary = false,
 	newLevel = 200,
@@ -163,8 +164,8 @@ var ground = [],
 				setVisible("gameover", true);
 				setVisible("dino", false);
 				document.body.classList.add("gameover");
-				document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
-					score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
+				document.getElementById("twitter").href = "https://twitter.com/home?status=" +
+					encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
 				return;
 			} else {
 				playerBottom = playerTile.height;
@@ -222,6 +223,7 @@ var ground = [],
 		setVisible("splash", false);
 		setVisible("dino", true);
 		viewport = document.body.getBoundingClientRect();
+		gameOver = false;
 
 		// init ground
 		nbTiles = Math.floor(viewport.width / 20) + 2;
@@ -262,14 +264,19 @@ var ground = [],
 		rand = function () {
 			return generator.random();
 		};
+		window.location.hash = "#" + seed;
+		
+		// start loop
+		loop();
 	};
 
 // event listener
 var onAction = function () {
 	if (gameOver) {
-		init();
-		requestAnimationFrame(loop);
-		gameOver = false;
+		if (withSplash) {
+			withSplash = false;
+			init();
+		}
 		return;
 	}
 	if (!playerOnFloor && playerDblJump) {
@@ -301,12 +308,25 @@ var onAction = function () {
 	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
 };
 
+// event listeners
 document.addEventListener("keydown", onAction);
 document.addEventListener("touchstart", function (e) {
 	e.preventDefault();
 	onAction();
 });
+
 // update on resize
 window.addEventListener("resize", function () {
+	init();
+});
+
+// retry and try new
+document.getElementById("retry").addEventListener("click", function (event) {
+	event.preventDefault();
+	init();
+});
+document.getElementById("trynew").addEventListener("click", function (event) {
+	event.preventDefault();
+	window.location.hash = "";
 	init();
 });
