@@ -61,6 +61,8 @@ var ground = [],
 				var adjust = 1;
 				if (index > nbTiles * 4/5) {
 					adjust = (nbTiles - index) / (nbTiles / 5);
+				} else if (index < 5){
+					adjust = 1 - (5 - index) / 4;
 				}
 				tile.style.height = adjust * item.height + "px";
 			}
@@ -68,7 +70,7 @@ var ground = [],
 		shift = shift + (10 * delta);
 
 		// adjust player on 5th tile
-		var playerTile = ground[5],
+		var playerTile = ground[7],
 			target = playerTile.height,
 			diff = playerBottom - target,
 			dino = document.getElementById("dino"),
@@ -110,7 +112,7 @@ var ground = [],
 		}
 
 		// adjust sprite
-		if (score % 20 < 10) {
+		if (score % 14 < 7) {
 			dino.style.backgroundPosition = "-14px 0px";
 		} else {
 			dino.style.backgroundPosition = "0px 0px";
