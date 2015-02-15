@@ -107,12 +107,10 @@ var ground = [],
 		if (score % 100 === 0) {
 			noVaryBase = noVaryBase * 0.8;
 			withVariationBase += 0.05;
-		} else {
-			dino.style.backgroundPosition = "0px 0px";
 		}
 
 		// adjust sprite
-		if (score % 100 < 10) {
+		if (score % 10 < 5) {
 			dino.style.backgroundPosition = "14px 0px";
 		} else {
 			dino.style.backgroundPosition = "0px 0px";
