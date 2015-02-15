@@ -221,7 +221,7 @@ var onAction = function () {
 	}
 	if (!playerOnFloor && playerDblJump) {
 		if (playerAcceleration > 0) {
-			playerAcceleration = -1;
+			playerAcceleration = 0;
 		}
 	} else {
 		if (playerOnFloor) {
