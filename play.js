@@ -58,7 +58,11 @@ var ground = [],
 					}
 					item.height = Math.max(Math.min(item.height + diff, 300), 50);
 				}
-				tile.style.height = item.height + "px";
+				var adjust = 1;
+				if (index > nbTiles * 4/5) {
+					adjust = (nbTiles - index) / (nbTiles / 5);
+				}
+				tile.style.height = adjust * item.height + "px";
 			}
 		});
 		shift = shift + (10 * delta);
