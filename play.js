@@ -1,6 +1,11 @@
 var ground = [],
+
+	clouds = [],
+	cloudsCoolDown = 0,
+
 	nbTiles = 100,
 	tileWidth = 20,
+
 	shift = 0,
 	noVary = false,
 	darkColor = false,
@@ -14,6 +19,7 @@ var ground = [],
 
 	now,
 	delta,
+	viewport,
 
 	score = 0,
 	topScore = 0,
@@ -63,10 +69,36 @@ var ground = [],
 					adjust = (nbTiles - index) / (nbTiles / 5);
 				}
 				tile.style.height = adjust * item.height + "px";
-				tile.style.opacity = .5 + adjust / 2;
+				tile.style.opacity = 0.5 + adjust / 2;
 			}
 		});
 		shift = shift + (10 * delta);
+
+		// adjust clouds
+		if (!cloudsCoolDown) {
+			cloudsCoolDown = false;
+			if (Math.random() < 0.5) {
+				cloudsCoolDown = 150;
+				var cloud = document.createElement("div");
+				cloud.classList.add("cloud");
+				cloud.style.bottom = Math.floor((viewport.height - 350) * Math.random()) + 325;
+				document.getElementById("player").appendChild(cloud);
+				clouds.push({
+					cloud: cloud,
+					left: viewport.width
+				});
+			}
+		} else {
+			cloudsCoolDown--;
+		}
+		clouds.forEach(function (cloud) {
+			cloud.left -= delta * 2;
+			cloud.cloud.style.left = cloud.left;
+		});
+		// remove dead clouds
+		clouds = clouds.filter(function (cloud) {
+			return cloud.left > -200;
+		});
 
 		// adjust player on 5th tile
 		var playerTile = ground[7],
@@ -91,6 +123,7 @@ var ground = [],
 		} else {
 			// GAME OVER
 			gameOver = true;
+			score = Math.floor(score);
 			ga('send', 'event', 'score', 'session', 'Score', score);
 			if (score > topScore) {
 				topScore = score;
@@ -109,7 +142,7 @@ var ground = [],
 		dino.style.transform = "scale(" + scale + ")";
 
 		// adjust score
-		score++;
+		score = score + delta;
 		if (score % 100 === 0) {
 			noVaryBase = noVaryBase * 0.8;
 			withVariationBase += 0.05;
@@ -121,7 +154,7 @@ var ground = [],
 		} else {
 			dino.style.backgroundPosition = "0px 0px";
 		}
-		document.getElementById("score").innerHTML = "score: " + score;
+		document.getElementById("score").innerHTML = "score: " + Math.floor(score);
 
 		requestAnimationFrame(loop);
 	},
@@ -144,8 +177,9 @@ var ground = [],
 		document.getElementById("gameover").style.display = "none";
 		document.getElementById("splash").style.display = "none";
 		document.getElementById("dino").style.display = "block";
+		viewport = document.body.getBoundingClientRect();
 		// init ground
-		nbTiles = Math.floor(document.body.getBoundingClientRect().width / 20) + 2;
+		nbTiles = Math.floor(viewport.width / 20) + 2;
 		player.innerHTML = "";
 		ground.splice(0, ground.length);
 		for (var i = 0; i < nbTiles; i++) {
@@ -157,6 +191,8 @@ var ground = [],
 			tile.classList.add("ground");
 			player.appendChild(tile);
 		}
+		// init clouds
+		clouds.splice(0, clouds.length);
 		// init player
 		playerDblJump = false;
 		playerAcceleration = 0;
