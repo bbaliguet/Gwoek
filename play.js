@@ -103,7 +103,7 @@ var ground = [],
 		});
 
 		// adjust player on its tile
-		var playerTile = ground[Math.floor(playerLeft + 14 / tileWidth)],
+		var playerTile = ground[Math.floor((playerLeft + 14) / tileWidth)],
 			target = playerTile ? playerTile.height : 0,
 			diff = playerBottom - target,
 			dino = document.getElementById("dino"),
