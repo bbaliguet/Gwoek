@@ -3,7 +3,7 @@ var ground = [],
 	tileWidth = 20,
 	shift = 0,
 	noVary = false,
-	darkColor = true,
+	darkColor = false,
 
 	playerDblJump = false,
 	playerAcceleration = 0,
@@ -99,6 +99,7 @@ var ground = [],
 			}
 			dino.style.transform = "scale(1)";
 			document.getElementById("gameover").style.display = "block";
+			document.body.classList.add("gameover");
 			document.getElementById("twitter").href = "https://twitter.com/home?status=Just%20scored%20" +
 				score + "%20on%20Gwoek!%20http://bbaliguet.github.io/Gwoek/";
 			return;
@@ -139,6 +140,7 @@ var ground = [],
 
 	init = function () {
 		var player = document.getElementById("player");
+		document.body.classList.remove("gameover");
 		document.getElementById("gameover").style.display = "none";
 		document.getElementById("splash").style.display = "none";
 		document.getElementById("dino").style.display = "block";
@@ -187,11 +189,18 @@ var onAction = function () {
 	} else {
 		playerDblJump = true;
 		playerAcceleration = -15;
-		darkColor = !darkColor;
+		if (darkColor || Math.random() < 0.5) {
+			darkColor = !darkColor;
+			if (darkColor) {
+				document.body.classList.add("dark");
+			} else {
+				document.body.classList.remove("dark");
+			}
+		}
 	}
 	// generate a random color
 	var color = Math.floor(Math.random() * 360),
-		light = darkColor ? "80%" : "7%";
+		light = darkColor ? "7%" : "80%";
 	document.getElementById("player").style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
 };
 

@@ -10,6 +10,7 @@ body, html {
     width: 19px;
     box-shadow: 0px -6px 0px rgba(0,0,0,0.5);
     position: absolute;
+    z-index: 10;
 }
 
 #player {
@@ -23,12 +24,20 @@ body, html {
 
 #dino {
     position: absolute;
-    left: 127px;
+    left: 125px;
     width: 14px;
     height: 27px;
     background: url(Gwoek.png) no-repeat;
     bottom: 100px;
     display: none;
+}
+
+.dark #dino {
+    box-shadow: 0px 0px 50px rgba(256, 256, 256, 0.5);
+}
+
+.gameover #dino {
+    z-index: 10;
 }
 
 #gameover,
