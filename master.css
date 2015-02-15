@@ -24,14 +24,11 @@ body, html {
 #dino {
     position: absolute;
     left: 87px;
-    width: 10px;
-    height: 10px;
-    border: solid 2px black;
-    background: white;
+    width: 14px;
+    height: 22px;
+    background: url(Gwoek.png);
     bottom: 100px;
-    border-bottom: solid 10px;
     display: none;
-    transition: width 1s;
 }
 
 #gameover,
