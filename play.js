@@ -11,6 +11,7 @@ var ground = [],
 	noVary = false,
 	newLevel = 200,
 	darkColor = false,
+	verticalScale = 1,
 
 	playerDblJump = false,
 	playerAcceleration = 0,
@@ -29,6 +30,8 @@ var ground = [],
 	// limits for random ground generation
 	noVaryBase = 10,
 	withVariationBase = 0.1,
+	topLimit = 300,
+	bottomLimit = 20,
 	
 	// some dom elements
 	_environment = document.getElementById("environment"),
@@ -81,7 +84,7 @@ var ground = [],
 						// no variation for 10 cycles
 						noVary = noVaryBase;
 					}
-					item.height = Math.max(Math.min(item.height + diff, 300), 50);
+					item.height = Math.max(Math.min(item.height + diff, topLimit), bottomLimit);
 				}
 				var adjust = 1;
 				if (index > nbTiles * 4 / 5) {
@@ -101,7 +104,7 @@ var ground = [],
 				cloudsCoolDown = 150;
 				var cloud = document.createElement("div");
 				cloud.classList.add("cloud");
-				cloud.style.bottom = Math.floor((viewport.height - 350) * Math.random()) + 325;
+				cloud.style.bottom = Math.floor((viewport.height - topLimit - 50) * Math.random()) + topLimit + 25;
 				_environment.appendChild(cloud);
 				clouds.push({
 					cloud: cloud,
@@ -215,6 +218,7 @@ var ground = [],
 		setVisible("splash", false);
 		setVisible("dino", true);
 		viewport = document.body.getBoundingClientRect();
+		
 		// init ground
 		nbTiles = Math.floor(viewport.width / 20) + 2;
 		_environment.innerHTML = "";
@@ -228,8 +232,10 @@ var ground = [],
 			tile.classList.add("ground");
 			_environment.appendChild(tile);
 		}
+		
 		// init clouds
 		clouds.splice(0, clouds.length);
+		
 		// init player
 		playerDblJump = false;
 		playerAcceleration = 0;
