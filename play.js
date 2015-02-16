@@ -330,3 +330,12 @@ document.getElementById("trynew").addEventListener("click", function (event) {
 	window.location.hash = "";
 	init();
 });
+document.getElementById("retry").addEventListener("touchstart", function (event) {
+	event.preventDefault();
+	init();
+});
+document.getElementById("trynew").addEventListener("touchstart", function (event) {
+	event.preventDefault();
+	window.location.hash = "";
+	init();
+});
