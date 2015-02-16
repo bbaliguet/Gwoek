@@ -1,4 +1,6 @@
-var ground = [],
+var $ = document.querySelector.bind(document),
+
+	ground = [],
 	nbTiles = 100,
 	tileWidth = 20,
 
@@ -35,13 +37,17 @@ var ground = [],
 	bottomLimit = 20,
 
 	// some dom elements
-	_environment = document.getElementById("environment"),
-	_dino = document.getElementById("dino"),
-	_score = document.getElementById("score"),
+	_environmentEl = $("#environment"),
+	_dinoEl = $("#dino"),
+	_scoreEl = $("#score"),
+	_topScoreEl = $("#topscore"),
+	_twitterEl = $("#twitter"),
+	_gameOverEl = $("#gameover"),
+	_splashEl = $("#splash"),
 
 	// dom helpers
-	setVisible = function (id, visible) {
-		document.getElementById(id).style.display = visible ? "block" : "none";
+	setVisible = function (el, visible) {
+		el.style.display = visible ? "block" : "none";
 	},
 
 	// random generator
@@ -110,7 +116,7 @@ var ground = [],
 				var cloud = document.createElement("div");
 				cloud.classList.add("cloud");
 				cloud.style.bottom = Math.floor((viewport.height - topLimit - 50) * Math.random()) + topLimit + 25;
-				_environment.appendChild(cloud);
+				_environmentEl.appendChild(cloud);
 				clouds.push({
 					cloud: cloud,
 					left: viewport.width
@@ -157,14 +163,14 @@ var ground = [],
 				ga('send', 'event', 'score', 'session', 'Score', score);
 				if (score > topScore) {
 					topScore = score;
-					document.getElementById("topscore").innerHTML = "Top score: " + topScore;
+					_topScoreEl.innerHTML = "Top score: " + topScore;
 					ga('send', 'event', 'score', 'top', 'Top score', topScore);
 				}
-				_dino.style.transform = "scale(1)";
-				setVisible("gameover", true);
-				setVisible("dino", false);
+				_dinoEl.style.transform = "scale(1)";
+				setVisible(_gameOverEl, true);
+				setVisible(_dinoEl, false);
 				document.body.classList.add("gameover");
-				document.getElementById("twitter").href = "https://twitter.com/home?status=" +
+				_twitterEl.href = "https://twitter.com/home?status=" +
 					encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
 				return;
 			} else {
@@ -181,9 +187,9 @@ var ground = [],
 			playerLeft = 120;
 		}
 		var scale = playerOnFloor ? 1 : 1 + 1 / (Math.abs(playerAcceleration / 20) + 1);
-		_dino.style.bottom = playerBottom + "px";
-		_dino.style.left = playerLeft + "px";
-		_dino.style.transform = "scale(" + scale + ")";
+		_dinoEl.style.bottom = playerBottom + "px";
+		_dinoEl.style.left = playerLeft + "px";
+		_dinoEl.style.transform = "scale(" + scale + ")";
 
 		// adjust score
 		score = score + delta;
@@ -197,11 +203,11 @@ var ground = [],
 
 		// adjust sprite
 		if (score % 14 < 7) {
-			_dino.style.backgroundPosition = "-14px 0px";
+			_dinoEl.style.backgroundPosition = "-14px 0px";
 		} else {
-			_dino.style.backgroundPosition = "0px 0px";
+			_dinoEl.style.backgroundPosition = "0px 0px";
 		}
-		_score.innerHTML = "score: " + Math.floor(score);
+		_scoreEl.innerHTML = "score: " + Math.floor(score);
 
 		requestAnimationFrame(loop);
 	},
@@ -219,15 +225,15 @@ var ground = [],
 
 	init = function () {
 		document.body.classList.remove("gameover");
-		setVisible("gameover", false);
-		setVisible("splash", false);
-		setVisible("dino", true);
+		setVisible(_gameOverEl, false);
+		setVisible(_splashEl, false);
+		setVisible(_dinoEl, true);
 		viewport = document.body.getBoundingClientRect();
 		gameOver = false;
 
 		// init ground
 		nbTiles = Math.floor(viewport.width / 20) + 2;
-		_environment.innerHTML = "";
+		_environmentEl.innerHTML = "";
 		ground.splice(0, ground.length);
 		for (var i = 0; i < nbTiles; i++) {
 			var tile = document.createElement("div");
@@ -236,7 +242,7 @@ var ground = [],
 				tile: tile
 			});
 			tile.classList.add("ground");
-			_environment.appendChild(tile);
+			_environmentEl.appendChild(tile);
 		}
 
 		// init clouds
@@ -265,77 +271,73 @@ var ground = [],
 			return generator.random();
 		};
 		window.location.hash = "#" + seed;
-		
+
 		// start loop
 		loop();
-	};
+	},
 
-// event listener
-var onAction = function () {
-	if (gameOver) {
-		if (withSplash) {
-			withSplash = false;
-			init();
+	onAction = function () {
+		if (gameOver) {
+			if (withSplash) {
+				withSplash = false;
+				init();
+			}
+			return;
 		}
-		return;
-	}
-	if (!playerOnFloor && playerDblJump) {
-		if (playerAcceleration > 0) {
-			playerAcceleration = 0;
-		}
-	} else {
-		if (playerOnFloor) {
-			playerOnFloor = false;
-			playerAcceleration = -20;
-			playerBottom += 10;
+		if (!playerOnFloor && playerDblJump) {
+			if (playerAcceleration > 0) {
+				playerAcceleration = 0;
+			}
 		} else {
-			playerDblJump = true;
-			playerAcceleration = -15;
-			if (darkColor || Math.random() < 0.5) {
-				darkColor = !darkColor;
-				var classList = document.body.classList;
-				if (darkColor) {
-					classList.add("dark");
-				} else {
-					classList.remove("dark");
+			if (playerOnFloor) {
+				playerOnFloor = false;
+				playerAcceleration = -20;
+				playerBottom += 10;
+			} else {
+				playerDblJump = true;
+				playerAcceleration = -15;
+				if (darkColor || Math.random() < 0.5) {
+					darkColor = !darkColor;
+					var classList = document.body.classList;
+					if (darkColor) {
+						classList.add("dark");
+					} else {
+						classList.remove("dark");
+					}
 				}
 			}
 		}
+		// generate a random color
+		var color = Math.floor(Math.random() * 360),
+				light = darkColor ? "7%" : "80%";
+		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	};
+
+document.addEventListener("DOMContentLoaded", function (e) {
+	// event listeners
+	document.addEventListener("keydown", onAction);
+	document.addEventListener("touchstart", function (e) {
+		e.preventDefault();
+		onAction();
+	});
+
+	// update on resize
+	window.addEventListener("resize", init);
+
+	// retry and try new
+	function onRetry(event) {
+		event.preventDefault();
+		init();
 	}
-	// generate a random color
-	var color = Math.floor(Math.random() * 360),
-		light = darkColor ? "7%" : "80%";
-	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
-};
 
-// event listeners
-document.addEventListener("keydown", onAction);
-document.addEventListener("touchstart", function (e) {
-	e.preventDefault();
-	onAction();
-});
+	function onTryNew(event) {
+		event.preventDefault();
+		window.location.hash = "";
+		init();
+	}
 
-// update on resize
-window.addEventListener("resize", function () {
-	init();
-});
-
-// retry and try new
-document.getElementById("retry").addEventListener("click", function (event) {
-	event.preventDefault();
-	init();
-});
-document.getElementById("trynew").addEventListener("click", function (event) {
-	event.preventDefault();
-	window.location.hash = "";
-	init();
-});
-document.getElementById("retry").addEventListener("touchstart", function (event) {
-	event.preventDefault();
-	init();
-});
-document.getElementById("trynew").addEventListener("touchstart", function (event) {
-	event.preventDefault();
-	window.location.hash = "";
-	init();
+	$("#retry").addEventListener("click", onRetry);
+	$("#trynew").addEventListener("click", onTryNew);
+	$("#retry").addEventListener("touchstart", onRetry);
+	$("#trynew").addEventListener("touchstart", onTryNew);
 });
