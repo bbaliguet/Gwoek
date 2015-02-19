@@ -11,7 +11,7 @@ var $ = document.querySelector.bind(document),
 	gameOver = true,
 	withSplash = true,
 	shift = 0,
-	noVary = false,
+	noVary = -1,
 	newLevel = 200,
 	darkColor = false,
 	verticalScale = 1,
@@ -32,7 +32,7 @@ var $ = document.querySelector.bind(document),
 
 	// limits for random ground generation
 	noVaryBase = 10,
-	withVariationBase = 0.1,
+	nextGapTileBase = 30,
 	topLimit = 300,
 	bottomLimit = 20,
 
@@ -77,12 +77,7 @@ var $ = document.querySelector.bind(document),
 				if (index < nbTiles - 1) {
 					item.height = ground[index + 1].height;
 				} else {
-					if (!noVary || noVary < 0) {
-						noVary = false;
-					} else {
-						noVary--;
-					}
-					var withVariation = !noVary && rand() < withVariationBase,
+					var withVariation = noVary < 0,
 						variation = withVariation ? 200 : 4,
 						diff = -variation / 2 + rand() * variation;
 					// make sure gap is a real gap
@@ -93,7 +88,7 @@ var $ = document.querySelector.bind(document),
 							diff -= 20;
 						}
 						// no variation for 10 cycles
-						noVary = noVaryBase;
+						noVary = noVaryBase + Math.floor(rand() * nextGapTileBase);
 					}
 					item.height = Math.max(Math.min(item.height + diff, topLimit), bottomLimit);
 				}
@@ -105,7 +100,9 @@ var $ = document.querySelector.bind(document),
 				tile.style.opacity = 0.5 + adjust / 2;
 			}
 		});
+		
 		shift = shift + (10 * delta);
+		noVary = noVary - delta;
 
 		// adjust clouds
 		if (!cloudsCoolDown) {
@@ -196,7 +193,7 @@ var $ = document.querySelector.bind(document),
 		if (newLevel < 0) {
 			newLevel = 200;
 			noVaryBase = noVaryBase * 0.8;
-			withVariationBase += 0.05;
+			nextGapTileBase = nextGapTileBase * 0.8;
 		} else {
 			newLevel = newLevel - delta;
 		}
@@ -257,7 +254,7 @@ var $ = document.querySelector.bind(document),
 		score = 0;
 		playerLeft = 120;
 		noVaryBase = 10;
-		withVariationBase = 0.1;
+		nextGapTileBase =  30;
 
 		// init clock
 		now = 0;
