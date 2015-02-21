@@ -54,7 +54,19 @@ body {
 }
 
 .dark #dino {
-    box-shadow: 0px 0px 50px rgba(256, 256, 256, 0.5);
+    opacity: 0.5;
+}
+
+.dark #dino:before {
+    display: block;
+    position: absolute;
+    width: 29px;
+    height: 29px;
+    border-radius: 100%;
+    box-shadow: 0px 0px 30px rgba(256, 256, 256, 0.8);
+    content: "";
+    left: -6px;
+    top: -4px;
 }
 
 #gameover,
@@ -106,6 +118,25 @@ body {
 
 #splash h2 {
     font-size: 4vmin;
+}
+@-webkit-keyframes animateGwoek {
+    from   {background-position: 0px; }
+    to {background-position: -42px; }
+}
+@keyframes animateGwoek {
+    from   {background-position: 0px; }
+    to {background-position: -42px; }
+}
+
+#splash h2:after {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 22px;
+    background: url("Gwoek.png") no-repeat;
+    margin-left: 10px;
+    -webkit-animation: animateGwoek 0.5s steps(3) infinite;
+    animation: animateGwoek 0.5s steps(3) infinite;
 }
 
 #twitter,

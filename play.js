@@ -169,6 +169,10 @@ var $ = document.querySelector.bind(document),
 				document.body.classList.add("gameover");
 				_twitterEl.href = "https://twitter.com/home?status=" +
 					encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
+				// 2s before restart with space
+				setTimeout(function () {
+					withSplash = true;
+				}, 2000);
 				return;
 			} else {
 				playerBottom = playerTile.height;
@@ -198,12 +202,8 @@ var $ = document.querySelector.bind(document),
 			newLevel = newLevel - delta;
 		}
 
-		// adjust sprite
-		if (score % 14 < 7) {
-			_dinoEl.style.backgroundPosition = "-14px 0px";
-		} else {
-			_dinoEl.style.backgroundPosition = "0px 0px";
-		}
+		// adjust sprite (4 phases, 14px width)
+		_dinoEl.style.backgroundPosition = "-" + (14 * (Math.floor(score / 9) % 4)) + "px 0px";
 		_scoreEl.innerHTML = "score: " + Math.floor(score);
 
 		requestAnimationFrame(loop);
