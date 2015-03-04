@@ -263,6 +263,9 @@ var $ = document.querySelector.bind(document),
 		// init rand method. Use seed if provided
 		var hash = parseInt(window.location.hash.substr(1), 10);
 		seed = isNaN(hash) ? Math.floor(Math.random() * 100000000) : hash;
+		if (window.console) {
+			console.log("Gwoek playing with seed " + seed);
+		}
 		var generator = new MersenneTwister(seed);
 		rand = function () {
 			return generator.random();
