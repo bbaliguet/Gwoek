@@ -1,0 +1,10 @@
+{
+	"preset": "airbnb",
+	"validateIndent": {
+		"value": "\t"
+	}
+	"validateQuoteMarks": {
+		"mark": "\"",
+		"escape": false
+	}
+}
