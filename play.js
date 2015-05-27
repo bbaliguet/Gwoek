@@ -14,6 +14,10 @@ function setVisible(el, visible) {
 	el.style.display = visible ? "block" : "none";
 }
 
+function jitter(origin, value) {
+	return origin + value * Math.random() - value / 2;
+}
+
 /*
  *
  *
@@ -24,13 +28,12 @@ function setVisible(el, visible) {
  *
  */
 
-var _environmentEl = $("#environment");
-var _dinoEl = $("#dino");
 var _scoreEl = $("#score");
 var _topScoreEl = $("#topscore");
 var _twitterEl = $("#twitter");
 var _gameOverEl = $("#gameover");
 var _splashEl = $("#splash");
+var _canvas = $("#canvas");
 
 /*
  *
@@ -56,8 +59,6 @@ var viewport;
 var tileWidth = 20;
 
 // limits for random ground generation
-var noVaryBase = 10;
-var nextGapTileBase = 30;
 var topLimit = 300;
 var bottomLimit = 20;
 
@@ -102,22 +103,41 @@ Clock.prototype.total = function () {
  *
  */
 
-function renderGround(ground) {
-
+function renderPrepare() {
+	var context = _canvas.getContext("2d");
+	context.clearRect(0, 0, viewport.width, viewport.height);
 }
 
-function renderClouds(clouds) {
-
+function renderGround(ground) {
+	var context = _canvas.getContext("2d");
+	context.fillStyle = "#fff";
+	context.strokeStyle = "rgba(0,0,0,0.1)";
+	context.lineWidth = 1;
+	context.beginPath();
+	context.moveTo(0, viewport.height);
+	ground.forEach(function (item) {
+		var xPos = item.left;
+		var yPos = viewport.height - item.height;
+		context.lineTo(xPos, yPos);
+	});
+	context.lineTo(viewport.width, viewport.height);
+	context.fill();
+	context.stroke();
 }
 
 function renderPlayer(player) {
-	/*
-	var scale = playerOnFloor ? 1 : 1 + 1 / (Math.abs(playerAcceleration / 20) + 1);
-	_dinoEl.style.bottom = playerBottom + "px";
-	_dinoEl.style.left = playerLeft + "px";
-	_dinoEl.style.transform = "scale(" + scale + ")";
-	_dinoEl.style.backgroundPosition = "-" + (14 * (Math.floor(score / 9) % 4)) + "px 0px";
-	*/
+	var scale = player.onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
+	var xPos = player.left;
+	var yPos = viewport.height - player.bottom;
+	var context = _canvas.getContext("2d");
+	var size = 20;
+	context.fillStyle = "rgba(0,0,0,0.8)";
+	context.beginPath();
+	context.moveTo(xPos, yPos);
+	context.lineTo(xPos - size, yPos - size * scale);
+	context.lineTo(xPos, yPos - size * 2);
+	context.lineTo(xPos + size, yPos - size * scale);
+	context.fill();
 }
 
 /*
@@ -135,7 +155,7 @@ function updateGround(ground, dif, game) {
 
 	// adjust ground left
 	ground.forEach(function (item, index) {
-		item.left -= dif;
+		item.left -= dif * game.speed;
 	});
 
 	// filter out of view tiles
@@ -163,7 +183,7 @@ function updateGround(ground, dif, game) {
 			}
 
 			// no variation for 10 cycles
-			game.noVary = noVaryBase + Math.floor(game.rand() * nextGapTileBase);
+			game.noVary = game.noVaryBase + Math.floor(game.rand() * game.nextGapTileBase);
 		} else {
 			// update the noVary value
 			game.noVary--;
@@ -176,36 +196,6 @@ function updateGround(ground, dif, game) {
 	return ground;
 }
 
-function updateClouds(clouds, dif, game) {
-	// adjust clouds
-	if (!game.cloudsCoolDown) {
-		// can create new cloud
-		game.cloudsCoolDown = false;
-		if (Math.random() < 0.5) {
-			game.cloudsCoolDown = 150;
-			var cloud = {
-				bottom: Math.floor((viewport.height - topLimit - 50) * Math.random()) + topLimit + 25,
-				left: viewport.left
-			};
-			clouds.push(cloud);
-		}
-	} else {
-		game.cloudsCoolDown--;
-	}
-
-	// adjuste cloud position
-	clouds.forEach(function (cloud) {
-		cloud.left -= dif * 2;
-	});
-
-	// remove dead clouds
-	clouds = clouds.filter(function (cloud) {
-		return cloud.left > -200;
-	});
-
-	return clouds;
-}
-
 function updatePlayer(player, dif, game, ground) {
 
 	// adjust player on its tile
@@ -213,6 +203,7 @@ function updatePlayer(player, dif, game, ground) {
 	var target = playerTile ? playerTile.height : 0;
 	var diff = player.bottom - target;
 	var absoluteDiff = diff < 0 ? -diff : diff;
+	var tileContact = false;
 
 	if (playerTile && absoluteDiff < 20 && player.onFloor) {
 		player.bottom = target;
@@ -220,7 +211,7 @@ function updatePlayer(player, dif, game, ground) {
 		player.onFloor = true;
 		player.dblJump = false;
 	} else if (playerTile && diff > 0) {
-		player.acceleration = player.acceleration + dif;
+		player.acceleration = player.acceleration + dif / 20;
 		player.bottom = player.bottom - player.acceleration;
 		if (player.bottom - target < 3) {
 			player.bottom = target;
@@ -228,23 +219,26 @@ function updatePlayer(player, dif, game, ground) {
 			player.dblJump = false;
 		}
 	} else {
-		player.horizontalAcceleration = -8;
+		tileContact = true;
+		player.horizontalAcceleration = -100 * game.speed;
 		if (!playerTile) {
 			gameOver = true;
-			return;
+			return player;
 		} else {
 			player.bottom = playerTile.height;
 		}
 	}
 
-	// adjust player left
-	player.horizontalAcceleration += dif;
-	if (player.horizontalAcceleration > 1) {
-		player.horizontalAcceleration = 1;
-	}
-	player.left += player.horizontalAcceleration / 10;
-	if (player.left > 120) {
-		player.left = 120;
+	if (!tileContact) {
+		// adjust player left
+		player.horizontalAcceleration += dif / 3;
+		if (player.horizontalAcceleration > 20) {
+			player.horizontalAcceleration = 20;
+		}
+		player.left += player.horizontalAcceleration / 10;
+		if (player.left > 120) {
+			player.left = 120;
+		}
 	}
 
 	return player;
@@ -253,8 +247,6 @@ function updatePlayer(player, dif, game, ground) {
 function updateEnv(stage, dif, game) {
 	// adjust ground
 	stage.ground = updateGround(stage.ground, dif, stage.game);
-	// adjust clouds
-	stage.clouds = updateClouds(stage.clouds, dif, stage.game);
 	// adjust player
 	stage.player = updatePlayer(stage.player, dif, stage.game, stage.ground);
 }
@@ -272,27 +264,44 @@ function updateEnv(stage, dif, game) {
 function loop() {
 
 	var clock = stage.clock;
-	var dif;
+	var game = stage.game;
+	var previousTotal = clock.total();
+	var chunk = 15;
+	var dif = clock.tick(chunk);
 
 	// update the environment
 	do {
-		dif = stage.clock.tick(stage.game.speed);
 		if (dif) {
-			updateEnv(stage, dif);
+			updateEnv(stage, chunk);
+			previousTotal += chunk;
+			// lvl up ?
+			if (previousTotal > game.nextLevel) {
+				game.nextLevel += 5000;
+				game.noVaryBase = game.noVaryBase * 0.9;
+				game.nextGapTileBase = game.nextGapTileBase * 0.9;
+				game.speed = game.speed * 1.1;
+			}
+			
+			if (gameOver) {
+				showGameOver(previousTotal);
+				return;
+			}
+
 		}
-	} while(dif);
+		dif = dif - chunk;
+		if (dif < 0) {
+			dif = 0;
+		}
+	} while (dif);
 
 	// update the display
+	renderPrepare();
 	renderGround(stage.ground);
-	renderClouds(stage.clouds);
 	renderPlayer(stage.player);
 
-	_scoreEl.innerHTML = "score: " + Math.floor(clock.total());
+	_scoreEl.innerHTML = "score: " + Math.floor(previousTotal);
 
-	if (gameOver) {
-		return;
-	}
-
+	
 	requestAnimationFrame(function () {
 		loop();
 	});
@@ -312,7 +321,6 @@ function init() {
 	document.body.classList.remove("gameover");
 	setVisible(_gameOverEl, false);
 	setVisible(_splashEl, false);
-	setVisible(_dinoEl, true);
 
 	// init viewport
 	viewport = document.body.getBoundingClientRect();
@@ -320,7 +328,7 @@ function init() {
 
 	// init ground
 	var ground = [];
-	var nbTiles = Math.floor(viewport.width / tileWidth) + 1;
+	var nbTiles = Math.floor(viewport.width / tileWidth) + 2;
 	for (var i = 0; i < nbTiles; i++) {
 		ground.push({
 			height: 100,
@@ -330,7 +338,6 @@ function init() {
 
 	stage = {
 		ground: ground,
-		clouds: [],
 		player: {
 			dblJump: false,
 			acceleration: 0,
@@ -340,7 +347,11 @@ function init() {
 			left: 120
 		},
 		game: {
-			speed: 10
+			speed: 1,
+			noVary: 200,
+			noVaryBase: 10,
+			nextGapTileBase: 30,
+			nextLevel: 5000
 		},
 		clock: new Clock()
 	};
@@ -358,15 +369,16 @@ function init() {
 		return generator.random();
 	};
 	window.location.hash = "#" + seed;
-	
-	
+
+	// init canvas
+	_canvas.width = viewport.width;
+	_canvas.height = viewport.height;
 
 	// start loop
 	loop();
 }
 
-function showGameOver(game) {
-	var score = Math.floor(stage.clock.total());
+function showGameOver(score) {
 	ga("send", "event", "score", "session", "Score", score);
 	if (score > topScore) {
 		topScore = score;
@@ -374,9 +386,7 @@ function showGameOver(game) {
 		ga("send", "event", "score", "top", "Top score", topScore);
 	}
 
-	_dinoEl.style.transform = "scale(1)";
 	setVisible(_gameOverEl, true);
-	setVisible(_dinoEl, false);
 	document.body.classList.add("gameover");
 	_twitterEl.href = "https://twitter.com/home?status=" +
 		encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
@@ -408,7 +418,7 @@ function onAction() {
 	}
 
 	var player = stage.player;
-	
+
 	if (!player.onFloor && player.dblJump) {
 		if (player.acceleration > 0) {
 			player.acceleration = 0;
@@ -423,12 +433,6 @@ function onAction() {
 			player.acceleration = -15;
 			if (darkColor || Math.random() < 0.5) {
 				darkColor = !darkColor;
-				var classList = document.body.classList;
-				if (darkColor) {
-					classList.add("dark");
-				} else {
-					classList.remove("dark");
-				}
 			}
 		}
 	}
