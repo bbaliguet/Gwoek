@@ -80,14 +80,12 @@ var Clock = function () {
 	this.now = Date.now();
 	this.start = this.now;
 };
-Clock.prototype.tick = function (min) {
+Clock.prototype.tick = function (chunk) {
 	var now = Date.now();
 	var dif = now - this.now;
-	if (dif > min) {
-		this.now = now;
-		return dif;
-	}
-	return 0;
+	dif = dif - dif % chunk;
+	this.now = this.now + dif;
+	return dif;
 };
 Clock.prototype.total = function () {
 	return this.now - this.start;
@@ -140,6 +138,10 @@ function renderPlayer(player) {
 	context.fill();
 }
 
+function renderBackground(background) {
+
+}
+
 /*
  *
  *
@@ -171,7 +173,7 @@ function updateGround(ground, dif, game) {
 		};
 
 		var withVariation = game.noVary < 0;
-		var variation = withVariation ? 200 : 4;
+		var variation = withVariation ? game.variationBase: 4;
 		var diff = -variation / 2 + game.rand() * variation;
 
 		// make sure gap is a real gap
@@ -196,7 +198,40 @@ function updateGround(ground, dif, game) {
 	return ground;
 }
 
+function handleAction(player) {
+
+	if (!player.action) {
+		return false;
+	}
+	player.action = false;
+
+	if (!player.onFloor && player.dblJump) {
+		if (player.acceleration > 0) {
+			player.acceleration = 0;
+		}
+	} else {
+		if (player.onFloor) {
+			player.onFloor = false;
+			player.acceleration = -20;
+			player.bottom += 10;
+		} else {
+			player.dblJump = true;
+			player.acceleration = -15;
+			if (darkColor || Math.random() < 0.5) {
+				darkColor = !darkColor;
+			}
+		}
+	}
+	return true;
+}
+
 function updatePlayer(player, dif, game, ground) {
+
+	// handle action
+	if (handleAction(player)) {
+		game.changeColor = true;
+		game.actions.push(game.total);
+	}
 
 	// adjust player on its tile
 	var playerTile = ground[Math.floor((player.left + 14) / tileWidth)];
@@ -244,9 +279,15 @@ function updatePlayer(player, dif, game, ground) {
 	return player;
 }
 
+function updateBackground() {
+
+}
+
 function updateEnv(stage, dif, game) {
 	// adjust ground
 	stage.ground = updateGround(stage.ground, dif, stage.game);
+	// adjust background
+	stage.background = updateBackground(stage.background, dif, game);
 	// adjust player
 	stage.player = updatePlayer(stage.player, dif, stage.game, stage.ground);
 }
@@ -266,23 +307,26 @@ function loop() {
 	var clock = stage.clock;
 	var game = stage.game;
 	var previousTotal = clock.total();
-	var chunk = 15;
+	var chunk = 10;
 	var dif = clock.tick(chunk);
 
 	// update the environment
 	do {
 		if (dif) {
-			updateEnv(stage, chunk);
 			previousTotal += chunk;
+			game.total = previousTotal;
+			updateEnv(stage, chunk);
 			// lvl up ?
 			if (previousTotal > game.nextLevel) {
 				game.nextLevel += 5000;
 				game.noVaryBase = game.noVaryBase * 0.9;
 				game.nextGapTileBase = game.nextGapTileBase * 0.9;
 				game.speed = game.speed * 1.1;
+				game.variationBase = game.variationBase * 1.1;
 			}
-			
+
 			if (gameOver) {
+				console.log(stage.game.actions);
 				showGameOver(previousTotal);
 				return;
 			}
@@ -296,12 +340,21 @@ function loop() {
 
 	// update the display
 	renderPrepare();
+	renderBackground(stage.background);
 	renderGround(stage.ground);
 	renderPlayer(stage.player);
 
+	if (game.changeColor) {
+		game.changeColor = false;
+		// generate a random color
+		var color = Math.floor(Math.random() * 360),
+			light = darkColor ? "7%" : "80%";
+		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	}
+
 	_scoreEl.innerHTML = "score: " + Math.floor(previousTotal);
 
-	
+
 	requestAnimationFrame(function () {
 		loop();
 	});
@@ -351,7 +404,9 @@ function init() {
 			noVary: 200,
 			noVaryBase: 10,
 			nextGapTileBase: 30,
-			nextLevel: 5000
+			variationBase: 200,
+			nextLevel: 5000,
+			actions: []
 		},
 		clock: new Clock()
 	};
@@ -418,29 +473,7 @@ function onAction() {
 	}
 
 	var player = stage.player;
-
-	if (!player.onFloor && player.dblJump) {
-		if (player.acceleration > 0) {
-			player.acceleration = 0;
-		}
-	} else {
-		if (player.onFloor) {
-			player.onFloor = false;
-			player.acceleration = -20;
-			player.bottom += 10;
-		} else {
-			player.dblJump = true;
-			player.acceleration = -15;
-			if (darkColor || Math.random() < 0.5) {
-				darkColor = !darkColor;
-			}
-		}
-	}
-
-	// generate a random color
-	var color = Math.floor(Math.random() * 360),
-		light = darkColor ? "7%" : "80%";
-	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	player.action = true;
 }
 
 document.addEventListener("DOMContentLoaded", function (e) {
