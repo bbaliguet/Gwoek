@@ -11,75 +11,21 @@ body {
     transition: background-color .3s;
 }
 
-.ground {
-    position: absolute;
-    bottom: 0;
-    width: 19px;
-    background: #151515;
-    box-shadow: 0px -6px 0px rgba(0,0,0,0.5);
-}
-
-.cloud {
-    position: absolute;
-    width: 64px;
-    height: 64px;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 100%;
-    box-shadow: 25px 2px 0px -6px rgba(255, 255, 255, 0.5),
-                -34px 6px 0px -9px rgba(255, 255, 255, 0.6),
-                49px 8px 0px -13px rgba(255, 255, 255, 0.4);
-}
-
-.dark .cloud {
-    width: 6px;
-    height: 6px;
-    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.4);
-}
-
-#player {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-#dino {
-    position: absolute;
-    left: 125px;
-    width: 14px;
-    height: 27px;
-    bottom: 100px;
-    display: none;
-    background: url(Gwoek.png) no-repeat;
-}
-
-.dark #dino {
-    opacity: 0.5;
-}
-
-.dark #dino:before {
-    display: block;
-    position: absolute;
-    width: 29px;
-    height: 29px;
-    border-radius: 100%;
-    box-shadow: 0px 0px 30px rgba(256, 256, 256, 0.8);
-    content: "";
-    left: -6px;
-    top: -4px;
-}
-
 #gameover,
 #score,
 #splash,
-#topscore {
+#topscore,
+#lvlup,
+#loading {
     position: absolute;
     width: 100%;
     text-align: center;
     color: white;
 }
 
-#gameover {
+#gameover,
+#lvlup,
+#loading {
     top: 30vh;
     display: none;
     font-size: 8vmin;
@@ -89,6 +35,10 @@ body {
                  0px 4px 0px rgba(0, 0, 0, 0.5),
                  0px 5px 0px rgba(0, 0, 0, 0.5),
                  0px 6px 0px rgba(0, 0, 0, 0.5);
+}
+
+#lvlup.show {
+    display: block;
 }
 
 #score {
@@ -118,25 +68,6 @@ body {
 
 #splash h2 {
     font-size: 4vmin;
-}
-@-webkit-keyframes animateGwoek {
-    from   {background-position: 0px; }
-    to {background-position: -42px; }
-}
-@keyframes animateGwoek {
-    from   {background-position: 0px; }
-    to {background-position: -42px; }
-}
-
-#splash h2:after {
-    content: "";
-    display: inline-block;
-    width: 14px;
-    height: 22px;
-    background: url("Gwoek.png") no-repeat;
-    margin-left: 10px;
-    -webkit-animation: animateGwoek 0.5s steps(3) infinite;
-    animation: animateGwoek 0.5s steps(3) infinite;
 }
 
 #twitter,
