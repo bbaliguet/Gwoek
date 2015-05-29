@@ -33,7 +33,9 @@ var _topScoreEl = $("#topscore");
 var _twitterEl = $("#twitter");
 var _gameOverEl = $("#gameover");
 var _splashEl = $("#splash");
-var _canvas = $("#canvas");
+var _canvasEl = $("#canvas");
+var _lvlUpEl = $("#lvlUp");
+var _loadingEl = $("#loading");
 
 /*
  *
@@ -55,8 +57,11 @@ var stage;
 // view related
 var viewport;
 
-// environment: tiles and clouds
-var tileWidth = 20;
+// environment and adjusted variables
+var tileWidth = 15;
+var lvlupGap = 5000;
+var acceleration = 15;
+var baseSpeed = 80;
 
 // limits for random ground generation
 var topLimit = 300;
@@ -64,6 +69,24 @@ var bottomLimit = 20;
 
 // random generator
 var seed = 0;
+
+/*
+ *
+ *
+ *
+ * PARSE
+ *
+ *
+ *
+ */
+
+if (window.Parse) {
+	// parse saving
+	var Score = Parse.Object.extend("Score");
+	var publicACL = new Parse.ACL();
+	publicACL.setPublicReadAccess(true);
+	publicACL.setPublicWriteAccess(false);
+}
 
 /*
  *
@@ -102,20 +125,27 @@ Clock.prototype.total = function () {
  */
 
 function renderPrepare() {
-	var context = _canvas.getContext("2d");
+	var context = _canvasEl.getContext("2d");
 	context.clearRect(0, 0, viewport.width, viewport.height);
 }
 
 function renderGround(ground) {
-	var context = _canvas.getContext("2d");
-	context.fillStyle = "#fff";
+	var context = _canvasEl.getContext("2d");
+	var nbTiles = ground.length;
+	context.fillStyle = "rgba(255,255,255,0.8)";
 	context.strokeStyle = "rgba(0,0,0,0.1)";
-	context.lineWidth = 1;
+	context.lineWidth = 6;
 	context.beginPath();
 	context.moveTo(0, viewport.height);
-	ground.forEach(function (item) {
+	ground.forEach(function (item, index) {
 		var xPos = item.left;
-		var yPos = viewport.height - item.height;
+		var yPos = item.height;
+		if (index > nbTiles * 4 / 5) {
+			// progressive height, square fn
+			var variation = (nbTiles - index) / nbTiles * 5;
+			yPos = ((1 - (1 - variation) * (1 - variation)) / 2 + 1 / 2) * yPos;
+		}
+		yPos = viewport.height - yPos;
 		context.lineTo(xPos, yPos);
 	});
 	context.lineTo(viewport.width, viewport.height);
@@ -123,13 +153,13 @@ function renderGround(ground) {
 	context.stroke();
 }
 
-function renderPlayer(player) {
+function renderPlayer(player, ghost) {
 	var scale = player.onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
 	var xPos = player.left;
 	var yPos = viewport.height - player.bottom;
-	var context = _canvas.getContext("2d");
-	var size = 20;
-	context.fillStyle = "rgba(0,0,0,0.8)";
+	var context = _canvasEl.getContext("2d");
+	var size = ghost ? 15 : 20;
+	context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.8)";
 	context.beginPath();
 	context.moveTo(xPos, yPos);
 	context.lineTo(xPos - size, yPos - size * scale);
@@ -173,7 +203,7 @@ function updateGround(ground, dif, game) {
 		};
 
 		var withVariation = game.noVary < 0;
-		var variation = withVariation ? game.variationBase: 4;
+		var variation = withVariation ? game.variationBase : 4;
 		var diff = -variation / 2 + game.rand() * variation;
 
 		// make sure gap is a real gap
@@ -212,11 +242,11 @@ function handleAction(player) {
 	} else {
 		if (player.onFloor) {
 			player.onFloor = false;
-			player.acceleration = -20;
+			player.acceleration = -acceleration;
 			player.bottom += 10;
 		} else {
 			player.dblJump = true;
-			player.acceleration = -15;
+			player.acceleration = -acceleration * 3 / 4;
 			if (darkColor || Math.random() < 0.5) {
 				darkColor = !darkColor;
 			}
@@ -226,6 +256,10 @@ function handleAction(player) {
 }
 
 function updatePlayer(player, dif, game, ground) {
+
+	if (player.out) {
+		return;
+	}
 
 	// handle action
 	if (handleAction(player)) {
@@ -255,10 +289,14 @@ function updatePlayer(player, dif, game, ground) {
 		}
 	} else {
 		tileContact = true;
-		player.horizontalAcceleration = -100 * game.speed;
+		player.horizontalAcceleration = -baseSpeed * game.speed;
 		if (!playerTile) {
+			if (player.ghost) {
+				player.out = true;
+				return;
+			}
 			gameOver = true;
-			return player;
+			return;
 		} else {
 			player.bottom = playerTile.height;
 		}
@@ -275,8 +313,6 @@ function updatePlayer(player, dif, game, ground) {
 			player.left = 120;
 		}
 	}
-
-	return player;
 }
 
 function updateBackground() {
@@ -288,8 +324,10 @@ function updateEnv(stage, dif, game) {
 	stage.ground = updateGround(stage.ground, dif, stage.game);
 	// adjust background
 	stage.background = updateBackground(stage.background, dif, game);
-	// adjust player
-	stage.player = updatePlayer(stage.player, dif, stage.game, stage.ground);
+	// adjust players
+	stage.players.forEach(function (player) {
+		updatePlayer(player, dif, stage.game, stage.ground);
+	});
 }
 
 /*
@@ -306,19 +344,31 @@ function loop() {
 
 	var clock = stage.clock;
 	var game = stage.game;
-	var previousTotal = clock.total();
+	var total = clock.total();
 	var chunk = 10;
 	var dif = clock.tick(chunk);
 
 	// update the environment
 	do {
 		if (dif) {
-			previousTotal += chunk;
-			game.total = previousTotal;
+			total += chunk;
+			game.total = total;
+
+			// update ghosts
+			stage.players.forEach(function (player) {
+				if (!player.ghost) {
+					return;
+				}
+				if (player.actions.indexOf(total) != -1) {
+					player.action = true;
+				}
+			});
+
 			updateEnv(stage, chunk);
 			// lvl up ?
-			if (previousTotal > game.nextLevel) {
-				game.nextLevel += 5000;
+			if (total > game.nextLevel) {
+				game.lvlUp = true;
+				game.nextLevel += lvlupGap;
 				game.noVaryBase = game.noVaryBase * 0.9;
 				game.nextGapTileBase = game.nextGapTileBase * 0.9;
 				game.speed = game.speed * 1.1;
@@ -327,7 +377,7 @@ function loop() {
 
 			if (gameOver) {
 				console.log(stage.game.actions);
-				showGameOver(previousTotal);
+				showGameOver(total);
 				return;
 			}
 
@@ -342,7 +392,17 @@ function loop() {
 	renderPrepare();
 	renderBackground(stage.background);
 	renderGround(stage.ground);
-	renderPlayer(stage.player);
+	stage.players.forEach(function (player, index) {
+		renderPlayer(player, !!index);
+	});
+
+	if (game.lvlUp) {
+		game.lvlUp = false;
+		_lvlUpEl.classList.add("show");
+		setTimeout(function () {
+			_lvlUpEl.classList.remove("show");
+		}, 1500);
+	}
 
 	if (game.changeColor) {
 		game.changeColor = false;
@@ -352,7 +412,7 @@ function loop() {
 		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
 	}
 
-	_scoreEl.innerHTML = "score: " + Math.floor(previousTotal);
+	_scoreEl.innerHTML = "score: " + Math.floor(total);
 
 
 	requestAnimationFrame(function () {
@@ -369,6 +429,17 @@ function loop() {
  *
  *
  */
+
+function getPlayer() {
+	return {
+		dblJump: false,
+		acceleration: 0,
+		horizontalAcceleration: 0,
+		bottom: 100,
+		onFloor: true,
+		left: 120
+	};
+}
 
 function init() {
 	document.body.classList.remove("gameover");
@@ -391,21 +462,14 @@ function init() {
 
 	stage = {
 		ground: ground,
-		player: {
-			dblJump: false,
-			acceleration: 0,
-			horizontalAcceleration: 0,
-			bottom: 100,
-			onFloor: true,
-			left: 120
-		},
+		players: [getPlayer()],
 		game: {
 			speed: 1,
 			noVary: 200,
 			noVaryBase: 10,
 			nextGapTileBase: 30,
 			variationBase: 200,
-			nextLevel: 5000,
+			nextLevel: lvlupGap,
 			actions: []
 		},
 		clock: new Clock()
@@ -426,11 +490,43 @@ function init() {
 	window.location.hash = "#" + seed;
 
 	// init canvas
-	_canvas.width = viewport.width;
-	_canvas.height = viewport.height;
+	_canvasEl.width = viewport.width;
+	_canvasEl.height = viewport.height;
 
-	// start loop
-	loop();
+	if (!window.Parse) {
+		return loop();
+	}
+
+	// retrieve the top track as ghost
+	var query = new Parse.Query(Score);
+	query.equalTo("seed", seed);
+	query.descending("score");
+	query.limit(4);
+	setVisible(_loadingEl, true);
+
+	var started = false;
+	var start = function () {
+		if (started) {
+			return;
+		}
+		started = true;
+		setVisible(_loadingEl, false);
+		loop();
+	}
+	query.find().then(function (results) {
+		if (!started) {
+			results.forEach(function (result) {
+				var player = getPlayer();
+				player.actions = result.get("actions") || [];
+				player.ghost = true;
+				stage.players.push(player);
+			});
+		}
+		start();
+	});
+
+	// dont want to wait parse for too long
+	setTimeout(start, 2000);
 }
 
 function showGameOver(score) {
@@ -438,10 +534,28 @@ function showGameOver(score) {
 	if (score > topScore) {
 		topScore = score;
 		_topScoreEl.innerHTML = "Top score: " + topScore;
-		ga("send", "event", "score", "top", "Top score", topScore);
+		// save to ga
+		ga && ga("send", "event", "score", "top", "Top score", topScore);
+	}
+
+	if (window.Parse) {
+		// save to parse
+		var saved = new Score();
+		saved.save({
+			seed: seed,
+			score: score,
+			actions: stage.game.actions,
+			ACL: publicACL
+		}).then(function () {
+			if (!window.console) {
+				return;
+			}
+			console.log("Score " + score + " for seed " + seed + " saved.");
+		});
 	}
 
 	setVisible(_gameOverEl, true);
+	_lvlUpEl.classList.remove("show");
 	document.body.classList.add("gameover");
 	_twitterEl.href = "https://twitter.com/home?status=" +
 		encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
@@ -472,7 +586,7 @@ function onAction() {
 		return;
 	}
 
-	var player = stage.player;
+	var player = stage.players[0];
 	player.action = true;
 }
 
@@ -503,4 +617,8 @@ document.addEventListener("DOMContentLoaded", function (e) {
 	$("#trynew").addEventListener("click", onTryNew);
 	$("#retry").addEventListener("touchstart", onRetry);
 	$("#trynew").addEventListener("touchstart", onTryNew);
+
+	// Start Parse for scores and renderPlayer
+	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
+
 });

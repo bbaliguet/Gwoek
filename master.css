@@ -14,14 +14,18 @@ body {
 #gameover,
 #score,
 #splash,
-#topscore {
+#topscore,
+#lvlup,
+#loading {
     position: absolute;
     width: 100%;
     text-align: center;
     color: white;
 }
 
-#gameover {
+#gameover,
+#lvlup,
+#loading {
     top: 30vh;
     display: none;
     font-size: 8vmin;
@@ -31,6 +35,10 @@ body {
                  0px 4px 0px rgba(0, 0, 0, 0.5),
                  0px 5px 0px rgba(0, 0, 0, 0.5),
                  0px 6px 0px rgba(0, 0, 0, 0.5);
+}
+
+#lvlup.show {
+    display: block;
 }
 
 #score {
