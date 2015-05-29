@@ -18,6 +18,13 @@ function jitter(origin, value) {
 	return origin + value * Math.random() - value / 2;
 }
 
+function log(msg, obj) {
+	if (!window.console) {
+		return;
+	}
+	console.log(msg, obj);
+}
+
 /*
  *
  *
@@ -159,13 +166,23 @@ function renderPlayer(player, ghost) {
 	var yPos = viewport.height - player.bottom;
 	var context = _canvasEl.getContext("2d");
 	var size = ghost ? 15 : 20;
-	context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.8)";
-	context.beginPath();
-	context.moveTo(xPos, yPos);
-	context.lineTo(xPos - size, yPos - size * scale);
-	context.lineTo(xPos, yPos - size * 2);
-	context.lineTo(xPos + size, yPos - size * scale);
-	context.fill();
+	if (!darkColor) {
+		context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.8)";
+		context.beginPath();
+		context.moveTo(xPos, yPos);
+		context.lineTo(xPos - size, yPos - size * scale);
+		context.lineTo(xPos, yPos - size * 2);
+		context.lineTo(xPos + size, yPos - size * scale);
+		context.fill();
+	} else {
+		context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.8)";
+		context.beginPath();
+		context.moveTo(xPos, yPos);
+		context.lineTo(xPos - size, yPos - size - scale * size / 2);
+		context.lineTo(xPos, yPos - size);
+		context.lineTo(xPos + size, yPos - size - scale * size / 2);
+		context.fill();
+	}
 }
 
 function renderBackground(background) {
@@ -228,7 +245,7 @@ function updateGround(ground, dif, game) {
 	return ground;
 }
 
-function handleAction(player) {
+function handleAction(player, ghost) {
 
 	if (!player.action) {
 		return false;
@@ -247,7 +264,7 @@ function handleAction(player) {
 		} else {
 			player.dblJump = true;
 			player.acceleration = -acceleration * 3 / 4;
-			if (darkColor || Math.random() < 0.5) {
+			if (!ghost && (darkColor || Math.random() < 0.5)) {
 				darkColor = !darkColor;
 			}
 		}
@@ -262,7 +279,7 @@ function updatePlayer(player, dif, game, ground) {
 	}
 
 	// handle action
-	if (handleAction(player)) {
+	if (handleAction(player, player.ghost)) {
 		game.changeColor = true;
 		game.actions.push(game.total);
 	}
@@ -376,7 +393,7 @@ function loop() {
 			}
 
 			if (gameOver) {
-				console.log(stage.game.actions);
+				log(stage.game.actions);
 				showGameOver(total);
 				return;
 			}
@@ -479,9 +496,7 @@ function init() {
 	// init rand method. Use seed if provided
 	var hash = parseInt(window.location.hash.substr(1), 10);
 	seed = isNaN(hash) ? Math.floor(Math.random() * 100000000) : hash;
-	if (window.console) {
-		console.log("Gwoek playing with seed " + seed);
-	}
+	log("Gwoek playing with seed " + seed);
 
 	var generator = new MersenneTwister(seed);
 	stage.game.rand = function () {
@@ -547,10 +562,7 @@ function showGameOver(score) {
 			actions: stage.game.actions,
 			ACL: publicACL
 		}).then(function () {
-			if (!window.console) {
-				return;
-			}
-			console.log("Score " + score + " for seed " + seed + " saved.");
+			log("Score " + score + " for seed " + seed + " saved.");
 		});
 	}
 
@@ -558,7 +570,7 @@ function showGameOver(score) {
 	_lvlUpEl.classList.remove("show");
 	document.body.classList.add("gameover");
 	_twitterEl.href = "https://twitter.com/home?status=" +
-		encodeURIComponent("Just scored " + score + " on Gwoek! Challenge me on this track here: http://bbaliguet.github.io/Gwoek/#" + seed);
+		encodeURIComponent("Just scored " + score + " on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#" + seed);
 
 	// 2s before restart with space
 	setTimeout(function () {
