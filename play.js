@@ -269,7 +269,7 @@ function handleAction(player, ghost) {
 			}
 		}
 	}
-	return true;
+	return !ghost;
 }
 
 function updatePlayer(player, dif, game, ground) {
