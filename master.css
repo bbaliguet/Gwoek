@@ -83,6 +83,9 @@ body {
     margin-top: 3vmin;
     line-height: 3vmin;
 }
+#highscores {
+    display: none;
+}
 #highscoresBack {
     display: none;
     position: absolute;

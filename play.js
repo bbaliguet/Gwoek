@@ -43,6 +43,7 @@ var _splashEl = $("#splash");
 var _canvasEl = $("#canvas");
 var _lvlUpEl = $("#lvlUp");
 var _loadingEl = $("#loading");
+var _highscores = $("#highscores");
 
 /*
  *
@@ -74,10 +75,13 @@ var baseSpeed = 80;
 var topLimit = 300;
 var bottomLimit = 20;
 
-// random generator∫
+// random generator
 var seed = 0;
 
 var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
+
+// highscores
+var highscores = {};
 
 /*
  *
@@ -349,6 +353,15 @@ function updateEnv(stage, dif, game) {
 	});
 }
 
+function lvlUp(game) {
+	game.lvlUp = true;
+	game.nextLevel += lvlupGap;
+	game.noVaryBase = game.noVaryBase * 0.9;
+	game.nextGapTileBase = game.nextGapTileBase * 0.9;
+	game.speed = game.speed * 1.1;
+	game.variationBase = game.variationBase * 1.1;
+}
+
 /*
  *
  *
@@ -375,24 +388,26 @@ function loop() {
 		}
 	};
 
+	/* if (dif > 2000) {
+		gameover = true;
+	} */
+
 	// update the environment
 	do {
 		if (dif) {
-			total += chunk;
-			game.total = total;
 
-			// update ghosts
-			stage.players.forEach(updateGhost);
+			if (!gameover) {
+				total += chunk;
+				game.total = total;
 
-			updateEnv(stage, chunk);
-			// lvl up ?
-			if (total > game.nextLevel) {
-				game.lvlUp = true;
-				game.nextLevel += lvlupGap;
-				game.noVaryBase = game.noVaryBase * 0.9;
-				game.nextGapTileBase = game.nextGapTileBase * 0.9;
-				game.speed = game.speed * 1.1;
-				game.variationBase = game.variationBase * 1.1;
+				// update ghosts
+				stage.players.forEach(updateGhost);
+
+				updateEnv(stage, chunk);
+				// lvl up ?
+				if (total > game.nextLevel) {
+					lvlUp(game);
+				}
 			}
 
 			if (gameOver) {
@@ -461,6 +476,43 @@ function getPlayer() {
 	};
 }
 
+function start() {
+	if (!window.Parse) {
+		return loop();
+	}
+
+	// retrieve the top track as ghost
+	var query = new Parse.Query(Score);
+	query.equalTo("seed", seed);
+	query.descending("score");
+	query.limit(4);
+	setVisible(_loadingEl, true);
+
+	var started = false;
+	var startLoop = function () {
+		if (started) {
+			return;
+		}
+		started = true;
+		setVisible(_loadingEl, false);
+		loop();
+	};
+	query.find().then(function (results) {
+		if (!started) {
+			results.forEach(function (result) {
+				var player = getPlayer();
+				player.actions = result.get("actions") || [];
+				player.ghost = true;
+				stage.players.push(player);
+			});
+		}
+		startLoop();
+	});
+
+	// dont want to wait parse for too long
+	setTimeout(startLoop, 2000);
+}
+
 function init() {
 	document.body.classList.remove("gameover");
 	setVisible(_gameOverEl, false);
@@ -511,40 +563,7 @@ function init() {
 	_canvasEl.width = viewport.width;
 	_canvasEl.height = viewport.height;
 
-	if (!window.Parse) {
-		return loop();
-	}
-
-	// retrieve the top track as ghost
-	var query = new Parse.Query(Score);
-	query.equalTo("seed", seed);
-	query.descending("score");
-	query.limit(4);
-	setVisible(_loadingEl, true);
-
-	var started = false;
-	var start = function () {
-		if (started) {
-			return;
-		}
-		started = true;
-		setVisible(_loadingEl, false);
-		loop();
-	};
-	query.find().then(function (results) {
-		if (!started) {
-			results.forEach(function (result) {
-				var player = getPlayer();
-				player.actions = result.get("actions") || [];
-				player.ghost = true;
-				stage.players.push(player);
-			});
-		}
-		start();
-	});
-
-	// dont want to wait parse for too long
-	setTimeout(start, 2000);
+	start();
 }
 
 function showGameOver(score) {
