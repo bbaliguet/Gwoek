@@ -375,6 +375,10 @@ function lvlUp(game) {
 function loop() {
 
 	var clock = stage.clock;
+	if (!clock) {
+		clock = new Clock();
+		stage.clock = clock;
+	}
 	var game = stage.game;
 	var total = clock.total();
 	var chunk = 10;
@@ -388,15 +392,15 @@ function loop() {
 		}
 	};
 
-	/* if (dif > 2000) {
-		gameover = true;
-	} */
+	if (dif > 2000) {
+		gameOver = true;
+	}
 
 	// update the environment
 	do {
 		if (dif) {
 
-			if (!gameover) {
+			if (!gameOver) {
 				total += chunk;
 				game.total = total;
 
@@ -543,8 +547,7 @@ function init() {
 			variationBase: 200,
 			nextLevel: lvlupGap,
 			actions: []
-		},
-		clock: new Clock()
+		}
 	};
 
 
