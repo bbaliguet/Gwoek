@@ -72,11 +72,35 @@ body {
 
 #twitter,
 #retry,
-#trynew {
+#trynew,
+#highscores {
     display: block;
     color: white;
     text-decoration: none;
     font-size: 3vmin;
     text-shadow: 0px 1px 0px black,
                  0px 2px 0px black;
+    margin-top: 3vmin;
+    line-height: 3vmin;
+}
+#highscoresBack {
+    display: none;
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    background: rgba(0,0,0,0.8);
+}
+#highscoresShow {
+    display: none;
+    position: absolute;
+    top: 40px;
+    bottom: 40px;
+    left: 40px;
+    right: 40px;
+    overflow: auto;
+    background: white;
+    padding: 40px;
+    box-shadow: 10px 10px 50px black;
 }

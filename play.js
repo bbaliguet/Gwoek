@@ -74,8 +74,10 @@ var baseSpeed = 80;
 var topLimit = 300;
 var bottomLimit = 20;
 
-// random generator
+// random generator∫
 var seed = 0;
+
+var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
 
 /*
  *
@@ -364,6 +366,14 @@ function loop() {
 	var total = clock.total();
 	var chunk = 10;
 	var dif = clock.tick(chunk);
+	var updateGhost = function (player) {
+		if (!player.ghost) {
+			return;
+		}
+		if (player.actions.indexOf(total) != -1) {
+			player.action = true;
+		}
+	};
 
 	// update the environment
 	do {
@@ -372,14 +382,7 @@ function loop() {
 			game.total = total;
 
 			// update ghosts
-			stage.players.forEach(function (player) {
-				if (!player.ghost) {
-					return;
-				}
-				if (player.actions.indexOf(total) != -1) {
-					player.action = true;
-				}
-			});
+			stage.players.forEach(updateGhost);
 
 			updateEnv(stage, chunk);
 			// lvl up ?
@@ -527,7 +530,7 @@ function init() {
 		started = true;
 		setVisible(_loadingEl, false);
 		loop();
-	}
+	};
 	query.find().then(function (results) {
 		if (!started) {
 			results.forEach(function (result) {
@@ -550,7 +553,9 @@ function showGameOver(score) {
 		topScore = score;
 		_topScoreEl.innerHTML = "Top score: " + topScore;
 		// save to ga
-		ga && ga("send", "event", "score", "top", "Top score", topScore);
+		if (window.ga) {
+			ga("send", "event", "score", "top", "Top score", topScore);
+		}
 	}
 
 	if (window.Parse) {
@@ -570,7 +575,7 @@ function showGameOver(score) {
 	_lvlUpEl.classList.remove("show");
 	document.body.classList.add("gameover");
 	_twitterEl.href = "https://twitter.com/home?status=" +
-		encodeURIComponent("Just scored " + score + " on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#" + seed);
+		encodeURIComponent(twitterMsg.replace(/\{score\}/g, score).replace(/\{seed\}/g, seed));
 
 	// 2s before restart with space
 	setTimeout(function () {

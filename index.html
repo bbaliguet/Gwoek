@@ -4,18 +4,20 @@
         <link rel="stylesheet" href="master.css" media="screen" charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="description" content="HTML5 vanillajs platform jump game">
+        <meta itemprop="applicationCategory" content="Platform game">
         <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
     </head>
-    <body>
+    <body itemscope itemtype="http://schema.org/SoftwareApplication">
         <!-- the game itself -->
         <canvas id="canvas"></canvas>
 
         <!-- various messages -->
         <div id="gameover">
             GAME OVER!
-            <a id="twitter">Share score on twitter</a>
+            <a id="twitter">Claim score on twitter</a>
             <a id="retry" href="#">Retry this track</a>
             <a id="trynew" href="#">Try new track</a>
+            <!-- <a id="highscores" href="#">Highscores</a> -->
         </div>
         <div id="score">
         </div>
@@ -28,11 +30,31 @@
             Loading ...
         </div>
         <div id="splash">
-            <h2>Gwoek</h2>
+            <h2 itemprop="name">Gwoek</h2>
             Press any key / touch to start.<br/>
             Press a key / touch to jump.<br/>
             Again for double jump.<br/>
             Keep pressing / touching to slow down the fall.
+        </div>
+        
+        <div id="highscoresBack"></div>
+        <div id="highscoresShow">
+            <h2>On this track</h2>
+            <ul>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+            </ul>
+            <h2>Overall</h2>
+            <ul>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+            </ul>
         </div>
 
         <!-- scripts and analytics -->
