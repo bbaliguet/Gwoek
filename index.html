@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <meta name="description" content="HTML5 vanillajs platform jump game">
         <meta itemprop="applicationCategory" content="Platform game">
-        <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
+        <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet" type="text/css">
     </head>
     <body itemscope itemtype="http://schema.org/SoftwareApplication">
         <!-- the game itself -->
@@ -14,7 +14,7 @@
         <!-- various messages -->
         <div id="gameover">
             GAME OVER!
-            <a id="twitter">Claim score on twitter</a>
+            <a id="twitter" target="_blank">Claim score on twitter</a>
             <a id="retry" href="#">Retry this track</a>
             <a id="trynew" href="#">Try new track</a>
             <a id="highscores" href="#">Highscores</a>
@@ -40,32 +40,32 @@
         <div id="highscoresBack"></div>
         <div id="highscoresShow">
             <h2>On this track</h2>
-            <ul>
+            <ul id="trackscores">
                 <li></li>
                 <li></li>
                 <li></li>
                 <li></li>
                 <li></li>
             </ul>
-            <h2>Overall</h2>
+            <!-- <h2>Overall</h2>
             <ul>
                 <li></li>
                 <li></li>
                 <li></li>
                 <li></li>
                 <li></li>
-            </ul>
+            </ul> -->
         </div>
 
         <!-- scripts and analytics -->
-        <script src="http://www.parsecdn.com/js/parse-1.4.2.min.js"></script>
+        <script src="https://www.parsecdn.com/js/parse-1.4.2.min.js"></script>
         <script src="mt19937.js"></script>
         <script src="play.js"></script>
         <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
           (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
           m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','http://www.google-analytics.com/analytics.js','ga');
+      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
           ga('create', 'UA-59769068-1', 'auto');
           ga('send', 'pageview');
         </script>

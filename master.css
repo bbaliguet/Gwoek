@@ -83,9 +83,7 @@ body {
     margin-top: 3vmin;
     line-height: 3vmin;
 }
-#highscores {
-    display: none;
-}
+
 #highscoresBack {
     display: none;
     position: absolute;
@@ -106,4 +104,5 @@ body {
     background: white;
     padding: 40px;
     box-shadow: 10px 10px 50px black;
+    text-align: center;
 }

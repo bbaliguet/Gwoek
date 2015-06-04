@@ -25,6 +25,25 @@ function log(msg, obj) {
 	console.log(msg, obj);
 }
 
+function getJSON(url, callback) {
+	var request = new XMLHttpRequest();
+	var resolve = null;
+	var reject = null;
+	request.open("GET", url, true);
+	request.onreadystatechange = function() {
+		if (request.readyState != 4 || request.status != 200) {
+			return;
+		}
+		callback(JSON.parse(request.responseText));
+	};
+	request.send();
+}
+
+// redirect to https
+if (window.location.protocol == "http:") {
+	window.location.protocol = "https:";
+}
+
 /*
  *
  *
@@ -44,6 +63,8 @@ var _canvasEl = $("#canvas");
 var _lvlUpEl = $("#lvlUp");
 var _loadingEl = $("#loading");
 var _highscores = $("#highscores");
+var _highscoresShow = $("#highscoresShow");
+var _highscoresBack = $("#highscoresBack");
 
 /*
  *
@@ -79,6 +100,8 @@ var bottomLimit = 20;
 var seed = 0;
 
 var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
+var twitterLink = "https://twitter.com/{user}/status/{id}";
+var highscoresUrl = "https://cryptic-temple-1790.herokuapp.com/?";
 
 // highscores
 var highscores = {};
@@ -517,6 +540,33 @@ function start() {
 				stage.players.push(player);
 			});
 		}
+		// save highscores and try to retrieve twitter names
+		var keys = [];
+		var trackHighscores = highscores[seed];
+		if (!trackHighscores) {
+			trackHighscores = {};
+			highscores[seed] = trackHighscores;
+		}
+		results.forEach(function(result) {
+			var score = result.get("score");
+			keys.push("score=" + seed + "_" + score);
+			var scoreObj = trackHighscores[score];
+			if (!scoreObj) {
+				scoreObj = {
+					score: score
+				};
+				trackHighscores[score] = scoreObj;
+			}
+			scoreObj.actions = result.get("actions");
+		});
+		getJSON(highscoresUrl + keys.join("&"), function(scores) {
+			for (var key in scores) {
+				key = key.split("_");
+				trackHighscores[key[1]].tweet = scores[key];
+			}
+		});
+
+
 		startLoop();
 	});
 
@@ -587,6 +637,12 @@ function showGameOver(score) {
 		}
 	}
 
+	// save to highscores
+	highscores[seed][score] = {
+		actions: stage.game.actions,
+		you: true
+	};
+
 	if (window.Parse) {
 		// save to parse
 		var saved = new Score();
@@ -610,6 +666,28 @@ function showGameOver(score) {
 	setTimeout(function() {
 		withSplash = true;
 	}, 2000);
+}
+
+function showHighScores() {
+	var trackHighscores = highscores[seed];
+	var orderedHighscores = Object.keys(trackHighscores)
+		.sort()
+		.map(function(key) {
+			return trackHighscores[key];
+		}).forEach(function(result, index) {
+			var line = $("#trackscores li:nth-child(" + (index + 1) + ")");
+			var by = "- - -";
+			var tweet = score.tweet;
+			if (result.you) {
+				by = "YOU!";
+			} else if (tweet) {
+				var url = twitterLink.replace(/\{user\}/g, tweet.user).replace(/\{id\}/g, tweet.id);
+				by = "<a href=\"" + url + "\">@" + score.tweet.user + "</a>";
+			}
+			line.innerHTML = result.score + " by " + by;
+		});
+	setVisible(_highscoresBack);
+	setVisible(_highscoresShow);
 }
 
 /*
@@ -663,6 +741,8 @@ document.addEventListener("DOMContentLoaded", function(e) {
 	$("#trynew").addEventListener("click", onTryNew);
 	$("#retry").addEventListener("touchstart", onRetry);
 	$("#trynew").addEventListener("touchstart", onTryNew);
+	$("#highscores").addEventListener("click", showHighScores);
+	$("#highscores").addEventListener("touchstart", showHighScores);
 
 	// Start Parse for scores and renderPlayer
 	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
