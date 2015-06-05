@@ -27,8 +27,6 @@ function log(msg, obj) {
 
 function getJSON(url, callback) {
 	var request = new XMLHttpRequest();
-	var resolve = null;
-	var reject = null;
 	request.open("GET", url, true);
 	request.onreadystatechange = function() {
 		if (request.readyState != 4 || request.status != 200) {
@@ -40,8 +38,8 @@ function getJSON(url, callback) {
 }
 
 // redirect to https
-if (window.location.protocol == "http:") {
-	window.location.protocol = "https:";
+if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
+	// window.location.protocol = "https:";
 }
 
 /*
@@ -101,7 +99,7 @@ var seed = 0;
 
 var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
 var twitterLink = "https://twitter.com/{user}/status/{id}";
-var highscoresUrl = "https://cryptic-temple-1790.herokuapp.com/?";
+var highscoresUrl = "//cryptic-temple-1790.herokuapp.com/?";
 
 // highscores
 var highscores = {};
@@ -559,13 +557,14 @@ function start() {
 			}
 			scoreObj.actions = result.get("actions");
 		});
-		getJSON(highscoresUrl + keys.join("&"), function(scores) {
-			for (var key in scores) {
-				key = key.split("_");
-				trackHighscores[key[1]].tweet = scores[key];
-			}
-		});
-
+		if (keys.length) {
+			getJSON(highscoresUrl + keys.join("&"), function(scores) {
+				for (var key in scores) {
+					key = key.split("_");
+					trackHighscores[key[1]].tweet = scores[key];
+				}
+			});
+		}
 
 		startLoop();
 	});
