@@ -39,7 +39,7 @@ function getJSON(url, callback) {
 
 // redirect to https
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
-	// window.location.protocol = "https:";
+	window.location.protocol = "https:";
 }
 
 /*
@@ -560,8 +560,8 @@ function start() {
 		if (keys.length) {
 			getJSON(highscoresUrl + keys.join("&"), function(scores) {
 				for (var key in scores) {
-					key = key.split("_");
-					trackHighscores[key[1]].tweet = scores[key];
+					var splitKey = key.split("_");
+					trackHighscores[splitKey[1]].tweet = scores[key];
 				}
 			});
 		}
@@ -639,6 +639,7 @@ function showGameOver(score) {
 	// save to highscores
 	highscores[seed][score] = {
 		actions: stage.game.actions,
+		score: score,
 		you: true
 	};
 
@@ -670,23 +671,33 @@ function showGameOver(score) {
 function showHighScores() {
 	var trackHighscores = highscores[seed];
 	var orderedHighscores = Object.keys(trackHighscores)
-		.sort()
+		.map(parseFloat)
+		.sort(function(a, b) {
+			return b - a;
+		})
 		.map(function(key) {
 			return trackHighscores[key];
 		}).forEach(function(result, index) {
-			var line = $("#trackscores li:nth-child(" + (index + 1) + ")");
+			var line = $("#trackscores tr:nth-child(" + (index + 1) + ")");
 			var by = "- - -";
-			var tweet = score.tweet;
+			var img = "";
+			var tweet = result.tweet;
 			if (result.you) {
 				by = "YOU!";
 			} else if (tweet) {
 				var url = twitterLink.replace(/\{user\}/g, tweet.user).replace(/\{id\}/g, tweet.id);
-				by = "<a href=\"" + url + "\">@" + score.tweet.user + "</a>";
+				by = "<a href=\"" + url + "\">@" + tweet.user + "</a>";
+				img = "<img src=\"" + tweet.img + "\"/>";
 			}
-			line.innerHTML = result.score + " by " + by;
+			line.innerHTML = "<td>" + img + "</td><td>" + result.score + "</td><td> by </td><td>" + by + "</td>";
 		});
-	setVisible(_highscoresBack);
-	setVisible(_highscoresShow);
+	setVisible(_highscoresBack, true);
+	setVisible(_highscoresShow, true);
+}
+
+function hideHighScores() {
+	setVisible(_highscoresBack, false);
+	setVisible(_highscoresShow, false);
 }
 
 /*
@@ -713,6 +724,11 @@ function onAction() {
 	player.action = true;
 }
 
+function bindAction(element, listener) {
+	element.addEventListener("click", listener);
+	element.addEventListener("touchstart", listener);
+}
+
 document.addEventListener("DOMContentLoaded", function(e) {
 	// event listeners
 	document.addEventListener("keydown", onAction);
@@ -736,12 +752,11 @@ document.addEventListener("DOMContentLoaded", function(e) {
 		init();
 	}
 
-	$("#retry").addEventListener("click", onRetry);
-	$("#trynew").addEventListener("click", onTryNew);
-	$("#retry").addEventListener("touchstart", onRetry);
-	$("#trynew").addEventListener("touchstart", onTryNew);
-	$("#highscores").addEventListener("click", showHighScores);
-	$("#highscores").addEventListener("touchstart", showHighScores);
+	bindAction($("#retry"), onRetry);
+	bindAction($("#trynew"), onTryNew);
+	bindAction($("#highscores"), showHighScores);
+	bindAction($("#highscoresShow"), hideHighScores);
+	bindAction($("#highscoresBack"), hideHighScores);
 
 	// Start Parse for scores and renderPlayer
 	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
