@@ -25,6 +25,23 @@ function log(msg, obj) {
 	console.log(msg, obj);
 }
 
+function getJSON(url, callback) {
+	var request = new XMLHttpRequest();
+	request.open("GET", url, true);
+	request.onreadystatechange = function() {
+		if (request.readyState != 4 || request.status != 200) {
+			return;
+		}
+		callback(JSON.parse(request.responseText));
+	};
+	request.send();
+}
+
+// redirect to https
+if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
+	window.location.protocol = "https:";
+}
+
 /*
  *
  *
@@ -44,6 +61,8 @@ var _canvasEl = $("#canvas");
 var _lvlUpEl = $("#lvlUp");
 var _loadingEl = $("#loading");
 var _highscores = $("#highscores");
+var _highscoresShow = $("#highscoresShow");
+var _highscoresBack = $("#highscoresBack");
 
 /*
  *
@@ -79,6 +98,8 @@ var bottomLimit = 20;
 var seed = 0;
 
 var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
+var twitterLink = "https://twitter.com/{user}/status/{id}";
+var highscoresUrl = "//cryptic-temple-1790.herokuapp.com/?";
 
 // highscores
 var highscores = {};
@@ -112,18 +133,18 @@ if (window.Parse) {
  */
 
 // Clock generator
-var Clock = function () {
+var Clock = function() {
 	this.now = Date.now();
 	this.start = this.now;
 };
-Clock.prototype.tick = function (chunk) {
+Clock.prototype.tick = function(chunk) {
 	var now = Date.now();
 	var dif = now - this.now;
 	dif = dif - dif % chunk;
 	this.now = this.now + dif;
 	return dif;
 };
-Clock.prototype.total = function () {
+Clock.prototype.total = function() {
 	return this.now - this.start;
 };
 
@@ -145,22 +166,27 @@ function renderPrepare() {
 function renderGround(ground) {
 	var context = _canvasEl.getContext("2d");
 	var nbTiles = ground.length;
+
 	context.fillStyle = "rgba(255,255,255,0.8)";
 	context.strokeStyle = "rgba(0,0,0,0.1)";
 	context.lineWidth = 6;
 	context.beginPath();
 	context.moveTo(0, viewport.height);
-	ground.forEach(function (item, index) {
+
+	ground.forEach(function(item, index) {
 		var xPos = item.left;
 		var yPos = item.height;
+
 		if (index > nbTiles * 4 / 5) {
 			// progressive height, square fn
 			var variation = (nbTiles - index) / nbTiles * 5;
 			yPos = ((1 - (1 - variation) * (1 - variation)) / 2 + 1 / 2) * yPos;
 		}
+
 		yPos = viewport.height - yPos;
 		context.lineTo(xPos, yPos);
 	});
+
 	context.lineTo(viewport.width, viewport.height);
 	context.fill();
 	context.stroke();
@@ -209,12 +235,12 @@ function updateGround(ground, dif, game) {
 	var nbTiles = ground.length;
 
 	// adjust ground left
-	ground.forEach(function (item, index) {
+	ground.forEach(function(item, index) {
 		item.left -= dif * game.speed;
 	});
 
 	// filter out of view tiles
-	ground = ground.filter(function (item) {
+	ground = ground.filter(function(item) {
 		return item.left > -tileWidth;
 	});
 
@@ -318,6 +344,7 @@ function updatePlayer(player, dif, game, ground) {
 				player.out = true;
 				return;
 			}
+
 			gameOver = true;
 			return;
 		} else {
@@ -328,9 +355,11 @@ function updatePlayer(player, dif, game, ground) {
 	if (!tileContact) {
 		// adjust player left
 		player.horizontalAcceleration += dif / 3;
+
 		if (player.horizontalAcceleration > 20) {
 			player.horizontalAcceleration = 20;
 		}
+
 		player.left += player.horizontalAcceleration / 10;
 		if (player.left > 120) {
 			player.left = 120;
@@ -348,7 +377,7 @@ function updateEnv(stage, dif, game) {
 	// adjust background
 	stage.background = updateBackground(stage.background, dif, game);
 	// adjust players
-	stage.players.forEach(function (player) {
+	stage.players.forEach(function(player) {
 		updatePlayer(player, dif, stage.game, stage.ground);
 	});
 }
@@ -383,7 +412,7 @@ function loop() {
 	var total = clock.total();
 	var chunk = 10;
 	var dif = clock.tick(chunk);
-	var updateGhost = function (player) {
+	var updateGhost = function(player) {
 		if (!player.ghost) {
 			return;
 		}
@@ -431,14 +460,14 @@ function loop() {
 	renderPrepare();
 	renderBackground(stage.background);
 	renderGround(stage.ground);
-	stage.players.forEach(function (player, index) {
+	stage.players.forEach(function(player, index) {
 		renderPlayer(player, !!index);
 	});
 
 	if (game.lvlUp) {
 		game.lvlUp = false;
 		_lvlUpEl.classList.add("show");
-		setTimeout(function () {
+		setTimeout(function() {
 			_lvlUpEl.classList.remove("show");
 		}, 1500);
 	}
@@ -453,8 +482,7 @@ function loop() {
 
 	_scoreEl.innerHTML = "score: " + Math.floor(total);
 
-
-	requestAnimationFrame(function () {
+	requestAnimationFrame(function() {
 		loop();
 	});
 }
@@ -493,7 +521,7 @@ function start() {
 	setVisible(_loadingEl, true);
 
 	var started = false;
-	var startLoop = function () {
+	var startLoop = function() {
 		if (started) {
 			return;
 		}
@@ -501,15 +529,43 @@ function start() {
 		setVisible(_loadingEl, false);
 		loop();
 	};
-	query.find().then(function (results) {
+	query.find().then(function(results) {
 		if (!started) {
-			results.forEach(function (result) {
+			results.forEach(function(result) {
 				var player = getPlayer();
 				player.actions = result.get("actions") || [];
 				player.ghost = true;
 				stage.players.push(player);
 			});
 		}
+		// save highscores and try to retrieve twitter names
+		var keys = [];
+		var trackHighscores = highscores[seed];
+		if (!trackHighscores) {
+			trackHighscores = {};
+			highscores[seed] = trackHighscores;
+		}
+		results.forEach(function(result) {
+			var score = result.get("score");
+			keys.push("score=" + seed + "_" + score);
+			var scoreObj = trackHighscores[score];
+			if (!scoreObj) {
+				scoreObj = {
+					score: score
+				};
+				trackHighscores[score] = scoreObj;
+			}
+			scoreObj.actions = result.get("actions");
+		});
+		if (keys.length) {
+			getJSON(highscoresUrl + keys.join("&"), function(scores) {
+				for (var key in scores) {
+					var splitKey = key.split("_");
+					trackHighscores[splitKey[1]].tweet = scores[key];
+				}
+			});
+		}
+
 		startLoop();
 	});
 
@@ -557,7 +613,7 @@ function init() {
 	log("Gwoek playing with seed " + seed);
 
 	var generator = new MersenneTwister(seed);
-	stage.game.rand = function () {
+	stage.game.rand = function() {
 		return generator.random();
 	};
 	window.location.hash = "#" + seed;
@@ -580,6 +636,13 @@ function showGameOver(score) {
 		}
 	}
 
+	// save to highscores
+	highscores[seed][score] = {
+		actions: stage.game.actions,
+		score: score,
+		you: true
+	};
+
 	if (window.Parse) {
 		// save to parse
 		var saved = new Score();
@@ -588,7 +651,7 @@ function showGameOver(score) {
 			score: score,
 			actions: stage.game.actions,
 			ACL: publicACL
-		}).then(function () {
+		}).then(function() {
 			log("Score " + score + " for seed " + seed + " saved.");
 		});
 	}
@@ -600,9 +663,41 @@ function showGameOver(score) {
 		encodeURIComponent(twitterMsg.replace(/\{score\}/g, score).replace(/\{seed\}/g, seed));
 
 	// 2s before restart with space
-	setTimeout(function () {
+	setTimeout(function() {
 		withSplash = true;
 	}, 2000);
+}
+
+function showHighScores() {
+	var trackHighscores = highscores[seed];
+	var orderedHighscores = Object.keys(trackHighscores)
+		.map(parseFloat)
+		.sort(function(a, b) {
+			return b - a;
+		})
+		.map(function(key) {
+			return trackHighscores[key];
+		}).forEach(function(result, index) {
+			var line = $("#trackscores tr:nth-child(" + (index + 1) + ")");
+			var by = "- - -";
+			var img = "";
+			var tweet = result.tweet;
+			if (result.you) {
+				by = "YOU!";
+			} else if (tweet) {
+				var url = twitterLink.replace(/\{user\}/g, tweet.user).replace(/\{id\}/g, tweet.id);
+				by = "<a href=\"" + url + "\">@" + tweet.user + "</a>";
+				img = "<img src=\"" + tweet.img + "\"/>";
+			}
+			line.innerHTML = "<td>" + img + "</td><td>" + result.score + "</td><td> by </td><td>" + by + "</td>";
+		});
+	setVisible(_highscoresBack, true);
+	setVisible(_highscoresShow, true);
+}
+
+function hideHighScores() {
+	setVisible(_highscoresBack, false);
+	setVisible(_highscoresShow, false);
 }
 
 /*
@@ -629,10 +724,15 @@ function onAction() {
 	player.action = true;
 }
 
-document.addEventListener("DOMContentLoaded", function (e) {
+function bindAction(element, listener) {
+	element.addEventListener("click", listener);
+	element.addEventListener("touchstart", listener);
+}
+
+document.addEventListener("DOMContentLoaded", function(e) {
 	// event listeners
 	document.addEventListener("keydown", onAction);
-	document.addEventListener("touchstart", function (e) {
+	document.addEventListener("touchstart", function(e) {
 		e.preventDefault();
 		onAction();
 	});
@@ -652,10 +752,11 @@ document.addEventListener("DOMContentLoaded", function (e) {
 		init();
 	}
 
-	$("#retry").addEventListener("click", onRetry);
-	$("#trynew").addEventListener("click", onTryNew);
-	$("#retry").addEventListener("touchstart", onRetry);
-	$("#trynew").addEventListener("touchstart", onTryNew);
+	bindAction($("#retry"), onRetry);
+	bindAction($("#trynew"), onTryNew);
+	bindAction($("#highscores"), showHighScores);
+	bindAction($("#highscoresShow"), hideHighScores);
+	bindAction($("#highscoresBack"), hideHighScores);
 
 	// Start Parse for scores and renderPlayer
 	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");

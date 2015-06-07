@@ -1,10 +1,11 @@
 {
 	"preset": "airbnb",
-	"validateIndent": {
+	"validateIndentation": {
 		"value": "\t"
-	}
+	},
 	"validateQuoteMarks": {
 		"mark": "\"",
 		"escape": false
-	}
+	},
+	"requirePaddingNewLinesAfterBlocks" : false
 }

@@ -1,6 +1,7 @@
 # Gwoek
 Jump Game From Nogent The Big Hole.
 
-Coded over night with @juliandescottes & @captainbrosset and beers.
+V2. Not so much coded over night. Added some backend for ghost mode.
+V1. Coded over night with @juliandescottes & @captainbrosset and beers.
 
-Play on http://bbaliguet.github.io/Gwoek/
+Play on https://bbaliguet.github.io/Gwoek/
