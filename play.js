@@ -580,6 +580,15 @@ function init() {
 
 	// init viewport
 	viewport = document.body.getBoundingClientRect();
+	// copy into new object so it can be modified
+	viewport = {
+		width: viewport.width,
+		height: viewport.height
+	};
+	if (viewport.height<500) {
+		viewport.height = viewport.height * 2;
+		viewport.width = viewport.width * 2;
+	}
 	gameOver = false;
 
 	// init ground
