@@ -1,13 +1,13 @@
 {
 	"preset": "airbnb",
-	"validateIndentation": {
-		"value": "\t"
-	},
+	
+	"validateIndentation": "\t",
 	"validateQuoteMarks": {
 		"mark": "\"",
 		"escape": false
 	},
-	"requirePaddingNewLinesAfterBlocks" : {
-    	"allExcept": ["inCallExpressions", "inArrayExpressions", "inProperties"]
-	}
+	
+	"requirePaddingNewLinesAfterBlocks" : null,
+	"validateLineBreaks" : null,
+	"requirePaddingNewLinesBeforeLineComments" : null
 }

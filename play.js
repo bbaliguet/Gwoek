@@ -51,8 +51,9 @@ if (window.location.protocol == "http:" && window.location.hostname != "localhos
  *
  *
  */
- 
-var _scoreEl = $("#score"), return var _topScoreEl = $("#topscore");
+
+var _scoreEl = $("#score");
+var _topScoreEl = $("#topscore");
 var _twitterEl = $("#twitter");
 var _gameOverEl = $("#gameover");
 var _splashEl = $("#splash");
@@ -115,7 +116,7 @@ var highscores = {};
 
 if (window.Parse) {
 	// parse saving
-	var Score = Parse.Object.extend("Score"),
+	var Score = Parse.Object.extend("Score");
 	var publicACL = new Parse.ACL();
 	publicACL.setPublicReadAccess(true);
 	publicACL.setPublicWriteAccess(false);
@@ -373,8 +374,10 @@ function updateBackground() {
 function updateEnv(stage, dif, game) {
 	// adjust ground
 	stage.ground = updateGround(stage.ground, dif, stage.game);
+
 	// adjust background
 	stage.background = updateBackground(stage.background, dif, game);
+
 	// adjust players
 	stage.players.forEach(function(player) {
 		updatePlayer(player, dif, stage.game, stage.ground);
@@ -436,6 +439,7 @@ function loop() {
 				stage.players.forEach(updateGhost);
 
 				updateEnv(stage, chunk);
+
 				// lvl up ?
 				if (total > game.nextLevel) {
 					lvlUp(game);
@@ -473,9 +477,10 @@ function loop() {
 
 	if (game.changeColor) {
 		game.changeColor = false;
+
 		// generate a random color
-		var color = Math.floor(Math.random() * 360),
-			light = darkColor ? "7%" : "80%";
+		var color = Math.floor(Math.random() * 360);
+		var light = darkColor ? "7%" : "80%";
 		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
 	}
 
@@ -584,7 +589,7 @@ function init() {
 		width: viewport.width,
 		height: viewport.height
 	};
-	if (viewport.height<500) {
+	if (viewport.height < 500) {
 		viewport.height = viewport.height * 2;
 		viewport.width = viewport.width * 2;
 	}
@@ -613,7 +618,6 @@ function init() {
 			actions: []
 		}
 	};
-
 
 	// init rand method. Use seed if provided
 	var hash = parseInt(window.location.hash.substr(1), 10);
