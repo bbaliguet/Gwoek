@@ -51,9 +51,8 @@ if (window.location.protocol == "http:" && window.location.hostname != "localhos
  *
  *
  */
-
-var _scoreEl = $("#score");
-var _topScoreEl = $("#topscore");
+ 
+var _scoreEl = $("#score"), return var _topScoreEl = $("#topscore");
 var _twitterEl = $("#twitter");
 var _gameOverEl = $("#gameover");
 var _splashEl = $("#splash");
@@ -116,7 +115,7 @@ var highscores = {};
 
 if (window.Parse) {
 	// parse saving
-	var Score = Parse.Object.extend("Score");
+	var Score = Parse.Object.extend("Score"),
 	var publicACL = new Parse.ACL();
 	publicACL.setPublicReadAccess(true);
 	publicACL.setPublicWriteAccess(false);

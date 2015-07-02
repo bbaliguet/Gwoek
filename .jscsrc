@@ -7,5 +7,7 @@
 		"mark": "\"",
 		"escape": false
 	},
-	"requirePaddingNewLinesAfterBlocks" : false
+	"requirePaddingNewLinesAfterBlocks" : {
+    	"allExcept": ["inCallExpressions", "inArrayExpressions", "inProperties"]
+	}
 }
