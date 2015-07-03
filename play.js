@@ -468,7 +468,8 @@ function loop() {
 	});
 
 	// apply filters
-	filterCellShade(_canvasEl, [0, 0, 0, 255]);
+	// too slow !
+	// filterCellShade(_canvasEl, [0, 0, 0, 255]);
 
 	if (game.lvlUp) {
 		game.lvlUp = false;
