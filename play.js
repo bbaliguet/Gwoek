@@ -467,6 +467,9 @@ function loop() {
 		renderPlayer(player, !!index);
 	});
 
+	// apply filters
+	filterCellShade(_canvasEl, [0, 0, 0, 255]);
+
 	if (game.lvlUp) {
 		game.lvlUp = false;
 		_lvlUpEl.classList.add("show");
