@@ -57,12 +57,14 @@ var _topScoreEl = $("#topscore");
 var _twitterEl = $("#twitter");
 var _gameOverEl = $("#gameover");
 var _splashEl = $("#splash");
-var _canvasEl = $("#canvas");
 var _lvlUpEl = $("#lvlUp");
 var _loadingEl = $("#loading");
 var _highscores = $("#highscores");
 var _highscoresShow = $("#highscoresShow");
 var _highscoresBack = $("#highscoresBack");
+
+// canvas
+var _canvasEl = $("#canvas");
 
 /*
  *
@@ -158,18 +160,46 @@ Clock.prototype.total = function() {
  *
  */
 
+function applyCellShadingStyle(context) {
+	context.strokeStyle = "rgba(255,255,255,1)";
+	context.lineWidth = 8;
+	context.shadowColor = "rgba(0,0,0,0.5)";
+	context.shadowBlur = 15;
+	context.shadowOffsetX = 0;
+	context.shadowOffsetY = 10;
+}
+
+function applyStandardStyle(context) {
+	context.lineWidth = 0;
+	context.shadowColor = "rgba(0,0,0,0.5)";
+	context.shadowBlur = 5;
+	context.shadowOffsetX = 0;
+	context.shadowOffsetY = 2;
+}
+
+function applyNoStyle(context) {
+	context.lineWidth = 0;
+	context.shadowBlur = 0;
+	context.shadowOffsetX = 0;
+	context.shadowOffsetY = 0;
+}
+
 function renderPrepare() {
 	var context = _canvasEl.getContext("2d");
 	context.clearRect(0, 0, viewport.width, viewport.height);
 }
 
-function renderGround(ground) {
+function renderGround(ground, background, stage) {
 	var context = _canvasEl.getContext("2d");
 	var nbTiles = ground.length;
 
-	context.fillStyle = "rgba(255,255,255,0.8)";
-	context.strokeStyle = "rgba(0,0,0,0.1)";
-	context.lineWidth = 6;
+	if (background) {
+		applyCellShadingStyle(context);
+	} else {
+		context.fillStyle = "hsl(" + stage.color[0] + ",100%,70%)";
+		applyNoStyle(context);
+	}
+
 	context.beginPath();
 	context.moveTo(0, viewport.height);
 
@@ -188,37 +218,79 @@ function renderGround(ground) {
 	});
 
 	context.lineTo(viewport.width, viewport.height);
-	context.fill();
-	context.stroke();
+
+	if (background) {
+		context.stroke();
+	} else {
+		context.fill();
+	}
+
 }
 
-function renderPlayer(player, ghost) {
-	var scale = player.onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
+function renderPlayer(player, ghost, background, stage) {
+	var onFloor = player.onFloor;
+	var scale = onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
 	var xPos = player.left;
-	var yPos = viewport.height - player.bottom;
+	var yPos = viewport.height - player.bottom + (!ghost ? 2 : 0);
 	var context = _canvasEl.getContext("2d");
-	var size = ghost ? 15 : 20;
+	var size = ghost ? 12 : 16;
+	var color = "hsl(" + stage.color[0] + ",100%,70%)";
+
+	context.beginPath();
+	context.moveTo(xPos, yPos);
+
 	if (!darkColor) {
-		context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.8)";
-		context.beginPath();
-		context.moveTo(xPos, yPos);
+		if (background) {
+			applyCellShadingStyle(context);
+		} else {
+			if (onFloor) {
+				applyNoStyle(context);
+			} else {
+				applyStandardStyle(context);
+			}
+			context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : color;
+		}
 		context.lineTo(xPos - size, yPos - size * scale);
 		context.lineTo(xPos, yPos - size * 2);
 		context.lineTo(xPos + size, yPos - size * scale);
-		context.fill();
 	} else {
-		context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.8)";
-		context.beginPath();
-		context.moveTo(xPos, yPos);
+		if (background) {
+			applyCellShadingStyle(context);
+		} else {
+			applyStandardStyle(context);
+			context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
+		}
 		context.lineTo(xPos - size, yPos - size - scale * size / 2);
 		context.lineTo(xPos, yPos - size);
 		context.lineTo(xPos + size, yPos - size - scale * size / 2);
+	}
+
+	context.lineTo(xPos, yPos);
+	context.closePath();
+
+	if (background) {
+		context.stroke();
+	} else {
 		context.fill();
 	}
 }
 
 function renderBackground(background) {
 
+}
+
+function render(stage) {
+	renderPrepare();
+	renderBackground(stage.background);
+
+	// drop shadow and cell shading
+	renderGround(stage.ground, true, stage);
+	renderPlayer(stage.players[0], false, true, stage);
+
+	renderGround(stage.ground, false, stage);
+	stage.players.forEach(function(player, index) {
+		renderPlayer(player, !!index, false, stage);
+	});
 }
 
 /*
@@ -460,16 +532,7 @@ function loop() {
 	} while (dif);
 
 	// update the display
-	renderPrepare();
-	renderBackground(stage.background);
-	renderGround(stage.ground);
-	stage.players.forEach(function(player, index) {
-		renderPlayer(player, !!index);
-	});
-
-	// apply filters
-	// too slow !
-	// filterCellShade(_canvasEl, [0, 0, 0, 255]);
+	render(stage);
 
 	if (game.lvlUp) {
 		game.lvlUp = false;
@@ -486,6 +549,7 @@ function loop() {
 		var color = Math.floor(Math.random() * 360);
 		var light = darkColor ? "7%" : "80%";
 		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+		stage.color = [color, light];
 	}
 
 	_scoreEl.innerHTML = "score: " + Math.floor(total);
@@ -610,6 +674,7 @@ function init() {
 	}
 
 	stage = {
+		color: [Math.floor(Math.random() * 360), "80%"],
 		ground: ground,
 		players: [getPlayer()],
 		game: {
@@ -754,7 +819,11 @@ document.addEventListener("DOMContentLoaded", function(e) {
 	});
 
 	// update on resize
-	window.addEventListener("resize", init);
+	window.addEventListener("resize", function() {
+		if (!withSplash) {
+			init();
+		}
+	});
 
 	// retry and try new
 	function onRetry(event) {
