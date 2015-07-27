@@ -227,17 +227,34 @@ function renderGround(ground, background, stage) {
 
 }
 
-function renderPlayer(player, ghost, background, stage) {
+function renderPlayerPath(context, player, ghost) {
 	var onFloor = player.onFloor;
 	var scale = onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
 	var xPos = player.left;
 	var yPos = viewport.height - player.bottom + (!ghost ? 2 : 0);
-	var context = _canvasEl.getContext("2d");
 	var size = ghost ? 12 : 16;
+
+	context.moveTo(xPos, yPos);
+
+	if (!darkColor) {
+		context.lineTo(xPos - size, yPos - size * scale);
+		context.lineTo(xPos, yPos - size * 2);
+		context.lineTo(xPos + size, yPos - size * scale);
+	} else {
+		context.lineTo(xPos - size, yPos - size - scale * size / 2);
+		context.lineTo(xPos, yPos - size);
+		context.lineTo(xPos + size, yPos - size - scale * size / 2);
+	}
+
+	context.lineTo(xPos, yPos);
+}
+
+function renderPlayer(player, ghost, background, stage) {
+
 	var color = "hsl(" + stage.color[0] + ",100%,70%)";
+	var context = _canvasEl.getContext("2d");
 
 	context.beginPath();
-	context.moveTo(xPos, yPos);
 
 	if (!darkColor) {
 		if (background) {
@@ -250,9 +267,6 @@ function renderPlayer(player, ghost, background, stage) {
 			}
 			context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : color;
 		}
-		context.lineTo(xPos - size, yPos - size * scale);
-		context.lineTo(xPos, yPos - size * 2);
-		context.lineTo(xPos + size, yPos - size * scale);
 	} else {
 		if (background) {
 			applyCellShadingStyle(context);
@@ -260,12 +274,10 @@ function renderPlayer(player, ghost, background, stage) {
 			applyStandardStyle(context);
 			context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
 		}
-		context.lineTo(xPos - size, yPos - size - scale * size / 2);
-		context.lineTo(xPos, yPos - size);
-		context.lineTo(xPos + size, yPos - size - scale * size / 2);
 	}
 
-	context.lineTo(xPos, yPos);
+	renderPlayerPath(context, player, ghost);
+
 	context.closePath();
 
 	if (background) {
