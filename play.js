@@ -189,9 +189,22 @@ function renderPrepare() {
 	context.clearRect(0, 0, viewport.width, viewport.height);
 }
 
-function renderGround(ground, background, stage) {
+function renderGround(stage, background) {
+
+	var ground = stage.ground;
 	var context = _canvasEl.getContext("2d");
 	var nbTiles = ground.length;
+
+	var playerRendered = false;
+	var player = null;
+	var playerXPos = 0;
+	var playerOnFloor = false;
+
+	if (background) {
+		player = stage.players[0];
+		playerXPos = player.left;
+		playerOnFloor = player.onFloor;
+	}
 
 	if (background) {
 		applyCellShadingStyle(context);
@@ -215,6 +228,13 @@ function renderGround(ground, background, stage) {
 
 		yPos = viewport.height - yPos;
 		context.lineTo(xPos, yPos);
+
+		// player on this ground
+		if (background && !playerRendered && playerXPos >= xPos && playerXPos - xPos < tileWidth && playerOnFloor) {
+			playerRendered = true;
+			renderPlayerPath(context, player);
+			context.moveTo(xPos, yPos);
+		}
 	});
 
 	context.lineTo(viewport.width, viewport.height);
@@ -223,6 +243,14 @@ function renderGround(ground, background, stage) {
 		context.stroke();
 	} else {
 		context.fill();
+	}
+	
+	console.log(playerRendered);
+	if (background && !playerRendered) {
+		context.beginPath();
+		renderPlayerPath(context, player);
+		context.closePath();
+		context.stroke();
 	}
 
 }
@@ -249,42 +277,32 @@ function renderPlayerPath(context, player, ghost) {
 	context.lineTo(xPos, yPos);
 }
 
-function renderPlayer(player, ghost, background, stage) {
+function renderPlayer(player, ghost, stage) {
 
 	var color = "hsl(" + stage.color[0] + ",100%,70%)";
+	var onFloor = player.onFloor;
 	var context = _canvasEl.getContext("2d");
 
 	context.beginPath();
 
 	if (!darkColor) {
-		if (background) {
-			applyCellShadingStyle(context);
-		} else {
-			if (onFloor) {
-				applyNoStyle(context);
-			} else {
-				applyStandardStyle(context);
-			}
-			context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : color;
-		}
-	} else {
-		if (background) {
-			applyCellShadingStyle(context);
+		applyCellShadingStyle(context);
+
+		if (onFloor) {
+			applyNoStyle(context);
 		} else {
 			applyStandardStyle(context);
-			context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
 		}
+		context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : color;
+
+	} else {
+		applyStandardStyle(context);
+		context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
 	}
 
 	renderPlayerPath(context, player, ghost);
-
 	context.closePath();
-
-	if (background) {
-		context.stroke();
-	} else {
-		context.fill();
-	}
+	context.fill();
 }
 
 function renderBackground(background) {
@@ -296,12 +314,12 @@ function render(stage) {
 	renderBackground(stage.background);
 
 	// drop shadow and cell shading
-	renderGround(stage.ground, true, stage);
-	renderPlayer(stage.players[0], false, true, stage);
+	renderGround(stage, true);
 
-	renderGround(stage.ground, false, stage);
+	// front rendering
+	renderGround(stage);
 	stage.players.forEach(function(player, index) {
-		renderPlayer(player, !!index, false, stage);
+		renderPlayer(player, !!index, stage);
 	});
 }
 
