@@ -95,6 +95,8 @@ var baseSpeed = 80;
 // limits for random ground generation
 var topLimit = 300;
 var bottomLimit = 20;
+var bgJitter = 200;
+var bgMiddle = 300;
 
 // random generator
 var seed = 0;
@@ -244,8 +246,7 @@ function renderGround(stage, background) {
 	} else {
 		context.fill();
 	}
-	
-	console.log(playerRendered);
+
 	if (background && !playerRendered) {
 		context.beginPath();
 		renderPlayerPath(context, player);
@@ -305,13 +306,29 @@ function renderPlayer(player, ghost, stage) {
 	context.fill();
 }
 
-function renderBackground(background) {
+function renderBackground(stage) {
+	var background = stage.background;
+	var color = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "10" : "90") + "%)";
+	var context = _canvasEl.getContext("2d");
 
+	applyStandardStyle(context);
+	context.fillStyle = color;
+
+	context.beginPath();
+	context.moveTo(0, viewport.height);
+
+	background.forEach(function(point) {
+		context.lineTo(point.left, viewport.height - point.bottom);
+	});
+
+	context.lineTo(viewport.width, viewport.height);
+
+	context.fill();
 }
 
 function render(stage) {
 	renderPrepare();
-	renderBackground(stage.background);
+	renderBackground(stage);
 
 	// drop shadow and cell shading
 	renderGround(stage, true);
@@ -469,16 +486,47 @@ function updatePlayer(player, dif, game, ground) {
 	}
 }
 
-function updateBackground() {
+function updateBackground(background, dif, game) {
+	var outOfScreen = 0;
+	// update left and count out of screen
+	background.forEach(function(point) {
+		point.left -= dif / 2;
+		if (point.left < 0) {
+			outOfScreen++;
+		}
+	});
+	// remove out of screen
+	if (outOfScreen > 1) {
+		background.splice(0, outOfScreen - 1);
+	}
+	if (!background.length) {
+		background.push({
+			left: viewport.width,
+			bottom: 0
+		});
+	}
 
+	var last = background[background.length - 1];
+	while (last.left < viewport.width) {
+		var lastBottom = last.bottom;
+		var target = Math.floor(jitter(bgMiddle, bgJitter));
+		var left = last.left + (lastBottom > target ? lastBottom - target : target - lastBottom);
+		background.push({
+			bottom: target,
+			left: left
+		});
+		last = background[background.length - 1];
+	}
+
+	return background;
 }
 
-function updateEnv(stage, dif, game) {
+function updateEnv(stage, dif) {
 	// adjust ground
 	stage.ground = updateGround(stage.ground, dif, stage.game);
 
 	// adjust background
-	stage.background = updateBackground(stage.background, dif, game);
+	stage.background = updateBackground(stage.background, dif);
 
 	// adjust players
 	stage.players.forEach(function(player) {
@@ -706,6 +754,7 @@ function init() {
 	stage = {
 		color: [Math.floor(Math.random() * 360), "80%"],
 		ground: ground,
+		background: [],
 		players: [getPlayer()],
 		game: {
 			speed: 1,
