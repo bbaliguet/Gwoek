@@ -14,8 +14,20 @@ function setVisible(el, visible) {
 	el.style.display = visible ? "block" : "none";
 }
 
-function jitter(origin, value) {
-	return origin + value * Math.random() - value / 2;
+function jitter(origin, value, randFn) {
+	var rand = Math.random();
+	if (randFn) {
+		rand = randFn(rand);
+	}
+	return origin + value * rand - value / 2;
+}
+
+// same as jitter, but push for extrem values
+function jitterOnBorders(origin, value) {
+	var rand = Math.random();
+	rand = rand - 0.5;
+	rand = rand * rand * 4;
+	return jitter(origin, value, rand);
 }
 
 function log(msg, obj) {
@@ -61,7 +73,6 @@ var _lvlUpEl = $("#lvlUp");
 var _loadingEl = $("#loading");
 var _highscores = $("#highscores");
 var _highscoresShow = $("#highscoresShow");
-var _highscoresBack = $("#highscoresBack");
 
 // canvas
 var _canvasEl = $("#canvas");
@@ -88,15 +99,19 @@ var viewport;
 
 // environment and adjusted variables
 var tileWidth = 15;
-var lvlupGap = 5000;
+var lvlupGap = 10000;
 var acceleration = 15;
-var baseSpeed = 80;
+var baseSpeed = 60;
+var colorTimeout = 500;
+var backgroundSpeed = 4;
 
 // limits for random ground generation
 var topLimit = 300;
 var bottomLimit = 20;
-var bgJitter = 200;
-var bgMiddle = 300;
+var bgTopLimit = 500;
+var bgBottomLimit = 100;
+var bgJitter = (bgTopLimit - bgBottomLimit) / 2;
+var bgMiddle = bgBottomLimit + bgJitter;
 
 // random generator
 var seed = 0;
@@ -231,6 +246,14 @@ function renderGround(stage, background) {
 		yPos = viewport.height - yPos;
 		context.lineTo(xPos, yPos);
 
+		// lvl limit
+		if (item.lvlUp) {
+			context.lineTo(xPos - 10, yPos - 25);
+			context.lineTo(xPos, yPos - 100);
+			context.lineTo(xPos + 10, yPos - 25);
+			context.lineTo(xPos, yPos);
+		}
+
 		// player on this ground
 		if (background && !playerRendered && playerXPos >= xPos && playerXPos - xPos < tileWidth && playerOnFloor) {
 			playerRendered = true;
@@ -308,11 +331,17 @@ function renderPlayer(player, ghost, stage) {
 
 function renderBackground(stage) {
 	var background = stage.background;
-	var color = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "10" : "90") + "%)";
 	var context = _canvasEl.getContext("2d");
+	var color1 = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "7" : "80") + "%)";
+	var color2 = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "27" : "60") + "%)";
 
-	applyStandardStyle(context);
-	context.fillStyle = color;
+	// create gradient
+	var gradient = context.createLinearGradient(0, viewport.height - bgBottomLimit, 0, viewport.height - bgTopLimit);
+	gradient.addColorStop(0, color1);
+	gradient.addColorStop(1, color2);
+
+	applyNoStyle(context);
+	context.fillStyle = gradient;
 
 	context.beginPath();
 	context.moveTo(0, viewport.height);
@@ -390,6 +419,12 @@ function updateGround(ground, dif, game) {
 		}
 
 		newTile.height = Math.max(Math.min(lastTile.height + diff, topLimit), bottomLimit);
+
+		// predictive lvlup
+		if (!game.lvlUpTile && game.total + newTile.left / game.speed > game.nextLevel) {
+			game.lvlUpTile = true;
+			newTile.lvlUp = true;
+		}
 		ground.push(newTile);
 	}
 
@@ -490,7 +525,7 @@ function updateBackground(background, dif, game) {
 	var outOfScreen = 0;
 	// update left and count out of screen
 	background.forEach(function(point) {
-		point.left -= dif / 2;
+		point.left -= dif / backgroundSpeed;
 		if (point.left < 0) {
 			outOfScreen++;
 		}
@@ -501,21 +536,34 @@ function updateBackground(background, dif, game) {
 	}
 	if (!background.length) {
 		background.push({
-			left: viewport.width,
+			left: 0,
 			bottom: 0
 		});
 	}
 
-	var last = background[background.length - 1];
+	var nbPoints = background.length;
+	var last = background[nbPoints - 1];
+
 	while (last.left < viewport.width) {
 		var lastBottom = last.bottom;
-		var target = Math.floor(jitter(bgMiddle, bgJitter));
+		var target = Math.floor(jitter(bgMiddle, bgJitter, function(x) {
+			return x * x;
+		}));
 		var left = last.left + (lastBottom > target ? lastBottom - target : target - lastBottom);
+		// remove unused points as it will be aligned
+		var beforeLast = background[nbPoints - 2];
+		if (beforeLast) {
+			if ((beforeLast.bottom - lastBottom) * (lastBottom - target) > 0) {
+				background.pop();
+				nbPoints--;
+			}
+		}
 		background.push({
 			bottom: target,
 			left: left
 		});
-		last = background[background.length - 1];
+		nbPoints++;
+		last = background[nbPoints - 1];
 	}
 
 	return background;
@@ -541,6 +589,19 @@ function lvlUp(game) {
 	game.nextGapTileBase = game.nextGapTileBase * 0.9;
 	game.speed = game.speed * 1.1;
 	game.variationBase = game.variationBase * 1.1;
+	game.lvlUpTile = false;
+}
+
+function colorize(stage) {
+	var now = Date.now();
+	if (stage.color && stage.color[2] == darkColor && now < stage.color[3]) {
+		return;
+	}
+	// generate a random color
+	var color = Math.floor(Math.random() * 360);
+	var light = darkColor ? "7%" : "80%";
+	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	stage.color = [color, light, darkColor, now + colorTimeout];
 }
 
 /*
@@ -622,12 +683,7 @@ function loop() {
 
 	if (game.changeColor) {
 		game.changeColor = false;
-
-		// generate a random color
-		var color = Math.floor(Math.random() * 360);
-		var light = darkColor ? "7%" : "80%";
-		document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
-		stage.color = [color, light];
+		colorize(stage);
 	}
 
 	_scoreEl.innerHTML = "score: " + Math.floor(total);
@@ -752,12 +808,11 @@ function init() {
 	}
 
 	stage = {
-		color: [Math.floor(Math.random() * 360), "80%"],
 		ground: ground,
 		background: [],
 		players: [getPlayer()],
 		game: {
-			speed: 1,
+			speed: 1.1,
 			noVary: 200,
 			noVaryBase: 10,
 			nextGapTileBase: 30,
@@ -766,6 +821,8 @@ function init() {
 			actions: []
 		}
 	};
+
+	colorize(stage);
 
 	// init rand method. Use seed if provided
 	var hash = parseInt(window.location.hash.substr(1), 10);
@@ -839,6 +896,9 @@ function showHighScores() {
 			return trackHighscores[key];
 		}).forEach(function(result, index) {
 			var line = $("#trackscores tr:nth-child(" + (index + 1) + ")");
+			if (!line) {
+				return;
+			}
 			var by = "- - -";
 			var img = "";
 			var tweet = result.tweet;
@@ -851,12 +911,12 @@ function showHighScores() {
 			}
 			line.innerHTML = "<td>" + img + "</td><td>" + result.score + "</td><td> by </td><td>" + by + "</td>";
 		});
-	setVisible(_highscoresBack, true);
+	setVisible(_gameOverEl, false);
 	setVisible(_highscoresShow, true);
 }
 
 function hideHighScores() {
-	setVisible(_highscoresBack, false);
+	setVisible(_gameOverEl, true);
 	setVisible(_highscoresShow, false);
 }
 
@@ -885,8 +945,12 @@ function onAction() {
 }
 
 function bindAction(element, listener) {
-	element.addEventListener("click", listener);
-	element.addEventListener("touchstart", listener);
+	var wrapper = function(event) {
+		event.preventDefault();
+		listener();
+	};
+	element.addEventListener("click", wrapper);
+	element.addEventListener("touchstart", wrapper);
 }
 
 document.addEventListener("DOMContentLoaded", function(e) {
@@ -906,12 +970,10 @@ document.addEventListener("DOMContentLoaded", function(e) {
 
 	// retry and try new
 	function onRetry(event) {
-		event.preventDefault();
 		init();
 	}
 
 	function onTryNew(event) {
-		event.preventDefault();
 		window.location.hash = "";
 		init();
 	}
@@ -920,7 +982,6 @@ document.addEventListener("DOMContentLoaded", function(e) {
 	bindAction($("#trynew"), onTryNew);
 	bindAction($("#highscores"), showHighScores);
 	bindAction($("#highscoresShow"), hideHighScores);
-	bindAction($("#highscoresBack"), hideHighScores);
 
 	// Start Parse for scores and renderPlayer
 	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
