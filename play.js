@@ -233,6 +233,7 @@ function renderGround(stage, background) {
 	context.beginPath();
 	context.moveTo(0, viewport.height);
 
+	var lastGroundY = null;
 	ground.forEach(function(item, index) {
 		var xPos = item.left;
 		var yPos = item.height;
@@ -244,7 +245,10 @@ function renderGround(stage, background) {
 		}
 
 		yPos = viewport.height - yPos;
-		context.lineTo(xPos, yPos);
+		if (yPos != lastGroundY || item.lvlUp) {
+			context.lineTo(xPos, yPos);
+			lastGround = yPos;
+		}
 
 		// lvl limit
 		if (item.lvlUp) {
@@ -400,8 +404,8 @@ function updateGround(ground, dif, game) {
 		};
 
 		var withVariation = game.noVary < 0;
-		var variation = withVariation ? game.variationBase : 4;
-		var diff = -variation / 2 + game.rand() * variation;
+		var variation = withVariation ? game.variationBase : 0;
+		var diff = variation ? -variation / 2 + game.rand() * variation : 0;
 
 		// make sure gap is a real gap
 		if (withVariation) {
@@ -445,6 +449,7 @@ function handleAction(player, ghost) {
 	} else {
 		if (player.onFloor) {
 			player.onFloor = false;
+			player.dblJump = false;
 			player.acceleration = -acceleration;
 			player.bottom += 10;
 		} else {
@@ -477,11 +482,9 @@ function updatePlayer(player, dif, game, ground) {
 	var absoluteDiff = diff < 0 ? -diff : diff;
 	var tileContact = false;
 
-	if (playerTile && absoluteDiff < 20 && player.onFloor) {
+	if (playerTile && absoluteDiff < 10 && player.onFloor) {
 		player.bottom = target;
 		player.acceleration = 0;
-		player.onFloor = true;
-		player.dblJump = false;
 	} else if (playerTile && diff > 0) {
 		player.acceleration = player.acceleration + dif / 20;
 		player.bottom = player.bottom - player.acceleration;
@@ -491,6 +494,8 @@ function updatePlayer(player, dif, game, ground) {
 			player.dblJump = false;
 		}
 	} else {
+		player.onFloor = true;
+		player.dblJump = false;
 		tileContact = true;
 		player.horizontalAcceleration = -baseSpeed * game.speed;
 		if (!playerTile) {
@@ -688,9 +693,7 @@ function loop() {
 
 	_scoreEl.innerHTML = "score: " + Math.floor(total);
 
-	requestAnimationFrame(function() {
-		loop();
-	});
+	requestAnimationFrame(loop);
 }
 
 /*
@@ -854,6 +857,9 @@ function showGameOver(score) {
 	}
 
 	// save to highscores
+	if (!highscores[seed]) {
+		highscores[seed] = {};
+	}
 	highscores[seed][score] = {
 		actions: stage.game.actions,
 		score: score,
@@ -936,7 +942,6 @@ function onAction() {
 			withSplash = false;
 			init();
 		}
-
 		return;
 	}
 
@@ -983,7 +988,9 @@ document.addEventListener("DOMContentLoaded", function(e) {
 	bindAction($("#highscores"), showHighScores);
 	bindAction($("#highscoresShow"), hideHighScores);
 
-	// Start Parse for scores and renderPlayer
-	Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
+	if (window.Parse) {
+		// Start Parse for scores and renderPlayer
+		Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
+	}
 
 });

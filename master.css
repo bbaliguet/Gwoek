@@ -3,7 +3,7 @@ html {
     padding: 0;
     margin: 0;
     height: 100%;
-    font-family: 'Press Start 2P', cursive;
+    font-family: 'Press Start 2P', monospace;
 }
 
 body {
@@ -108,24 +108,21 @@ a {
     margin-right: auto;
     margin-top: 10vh;
     color: white;
-    background-color: rgba(0, 0, 0, 0.4);
 }
 #highscoresShow {
     display: none;
     position: absolute;
-    top: 40px;
-    bottom: 40px;
-    left: 40px;
-    right: 40px;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
     overflow: auto;
-    background: white;
     padding: 40px;
-    box-shadow: 10px 10px 50px black;
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 #highscoresShow td {
-    height: 52px;
-    padding: 5px;
+    padding: 1vmin 2vmin;
 }
 
 #highscoresShow img {

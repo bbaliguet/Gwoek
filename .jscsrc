@@ -8,6 +8,7 @@
 	},
 	
 	"requirePaddingNewLinesAfterBlocks" : null,
+	"requireTrailingComma" : null,
 	"validateLineBreaks" : null,
 	"requirePaddingNewLinesBeforeLineComments" : null
 }
