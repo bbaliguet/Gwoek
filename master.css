@@ -8,7 +8,7 @@ html {
 
 body {
     background: hsl(0, 0%, 80%);
-    transition: background-color .3s;
+    transition: background-color .6s;
 }
 
 a {

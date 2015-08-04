@@ -91,7 +91,6 @@ var _canvasEl = $("#canvas");
 var gameOver = true;
 var withSplash = true;
 var topScore = 0;
-var darkColor = false;
 var stage;
 
 // view related
@@ -104,6 +103,8 @@ var acceleration = 15;
 var baseSpeed = 60;
 var colorTimeout = 500;
 var backgroundSpeed = 4;
+var darkCountReboot = 5;
+var darkCountLimit = -1;
 
 // limits for random ground generation
 var topLimit = 300;
@@ -226,7 +227,7 @@ function renderGround(stage, background) {
 	if (background) {
 		applyCellShadingStyle(context);
 	} else {
-		context.fillStyle = "hsl(" + stage.color[0] + ",100%,70%)";
+		context.fillStyle = stage.groundColor;
 		applyNoStyle(context);
 	}
 
@@ -252,9 +253,10 @@ function renderGround(stage, background) {
 
 		// lvl limit
 		if (item.lvlUp) {
-			context.lineTo(xPos - 10, yPos - 25);
-			context.lineTo(xPos, yPos - 100);
-			context.lineTo(xPos + 10, yPos - 25);
+			context.lineTo(xPos - 10, yPos - 20);
+			context.lineTo(xPos - 10, yPos - 40);
+			context.lineTo(xPos + 10, yPos - 40);
+			context.lineTo(xPos + 10, yPos - 20);
 			context.lineTo(xPos, yPos);
 		}
 
@@ -292,7 +294,7 @@ function renderPlayerPath(context, player, ghost) {
 
 	context.moveTo(xPos, yPos);
 
-	if (!darkColor) {
+	if (player.darkCount > 0) {
 		context.lineTo(xPos - size, yPos - size * scale);
 		context.lineTo(xPos, yPos - size * 2);
 		context.lineTo(xPos + size, yPos - size * scale);
@@ -307,13 +309,13 @@ function renderPlayerPath(context, player, ghost) {
 
 function renderPlayer(player, ghost, stage) {
 
-	var color = "hsl(" + stage.color[0] + ",100%,70%)";
+	var color = stage.groundColor;
 	var onFloor = player.onFloor;
 	var context = _canvasEl.getContext("2d");
 
 	context.beginPath();
 
-	if (!darkColor) {
+	if (player.darkCount > 0) {
 		applyCellShadingStyle(context);
 
 		if (onFloor) {
@@ -336,13 +338,11 @@ function renderPlayer(player, ghost, stage) {
 function renderBackground(stage) {
 	var background = stage.background;
 	var context = _canvasEl.getContext("2d");
-	var color1 = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "7" : "80") + "%)";
-	var color2 = "hsl(" + stage.color[0] + ",100%," + (darkColor ? "27" : "60") + "%)";
 
 	// create gradient
 	var gradient = context.createLinearGradient(0, viewport.height - bgBottomLimit, 0, viewport.height - bgTopLimit);
-	gradient.addColorStop(0, color1);
-	gradient.addColorStop(1, color2);
+	gradient.addColorStop(0, stage.backColor1);
+	gradient.addColorStop(1, stage.backColor2);
 
 	applyNoStyle(context);
 	context.fillStyle = gradient;
@@ -451,12 +451,17 @@ function handleAction(player, ghost) {
 			player.onFloor = false;
 			player.dblJump = false;
 			player.acceleration = -acceleration;
-			player.bottom += 10;
+			player.bottom += 40;
 		} else {
 			player.dblJump = true;
-			player.acceleration = -acceleration * 3 / 4;
-			if (!ghost && (darkColor || Math.random() < 0.5)) {
-				darkColor = !darkColor;
+			if (player.darkCount > 0) {
+				player.acceleration = -acceleration * 3 / 4;
+			} else {
+				player.acceleration = player.acceleration * 3 / 2;
+			}
+			player.darkCount--;
+			if (player.darkCount < darkCountLimit) {
+				player.darkCount = darkCountReboot;
 			}
 		}
 	}
@@ -599,6 +604,8 @@ function lvlUp(game) {
 
 function colorize(stage) {
 	var now = Date.now();
+	var darkCount = stage.players[0].darkCount;
+	var darkColor = darkCount <= 0;
 	if (stage.color && stage.color[2] == darkColor && now < stage.color[3]) {
 		return;
 	}
@@ -606,7 +613,11 @@ function colorize(stage) {
 	var color = Math.floor(Math.random() * 360);
 	var light = darkColor ? "7%" : "80%";
 	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+
 	stage.color = [color, light, darkColor, now + colorTimeout];
+	stage.groundColor = "hsl(" + color + ",100%," + (darkColor ? "5" : "70") + "%)";
+	stage.backColor1 = "hsl(" + color + ",100%," + (darkColor ? "7" : "80") + "%)";
+	stage.backColor2 = "hsl(" + color + ",100%," + (darkColor ? "27" : "60") + "%)";
 }
 
 /*
@@ -713,7 +724,8 @@ function getPlayer() {
 		horizontalAcceleration: 0,
 		bottom: 100,
 		onFloor: true,
-		left: 120
+		left: 120,
+		darkCount: darkCountReboot
 	};
 }
 
@@ -798,11 +810,12 @@ function init() {
 		viewport.height = viewport.height * 2;
 		viewport.width = viewport.width * 2;
 	}
+
 	gameOver = false;
 
 	// init ground
 	var ground = [];
-	var nbTiles = Math.floor(viewport.width / tileWidth) + 2;
+	var nbTiles = Math.floor(viewport.width / tileWidth) + 3;
 	for (var i = 0; i < nbTiles; i++) {
 		ground.push({
 			height: 100,
