@@ -105,6 +105,7 @@ var colorTimeout = 500;
 var backgroundSpeed = 4;
 var darkCountReboot = 5;
 var darkCountLimit = -1;
+var twopi = Math.PI * 2;
 
 // limits for random ground generation
 var topLimit = 300;
@@ -305,12 +306,17 @@ function renderPlayerPath(context, player, ghost) {
 	}
 
 	context.lineTo(xPos, yPos);
+	return {
+		xPos: xPos,
+		yPos: yPos
+	};
 }
 
 function renderPlayer(player, ghost, stage) {
 
 	var color = stage.groundColor;
 	var onFloor = player.onFloor;
+	var dblJump = player.dblJump;
 	var context = _canvasEl.getContext("2d");
 
 	context.beginPath();
@@ -330,9 +336,28 @@ function renderPlayer(player, ghost, stage) {
 		context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
 	}
 
-	renderPlayerPath(context, player, ghost);
+	var pos = renderPlayerPath(context, player, ghost);
 	context.closePath();
 	context.fill();
+
+	if (dblJump) {
+		applyNoStyle(context);
+		var dif = (Date.now() - dblJump) / 10;
+		if (!player.dblJumpX) {
+			player.dblJumpX = pos.xPos;
+			player.dblJumpY = pos.yPos - 15;
+		}
+		context.fillStyle = ghost ? "transparent" : "rgba(0,0,0,0.05)";
+		context.strokeStyle = color;
+		context.lineWidth = 1;
+		context.beginPath();
+		context.arc(player.dblJumpX, player.dblJumpY, dif, 0, 2 * Math.PI);
+		context.fill();
+		context.stroke();
+	} else {
+		player.dblJumpX = null;
+		player.dblJumpY = null;
+	}
 }
 
 function renderBackground(stage) {
@@ -442,7 +467,7 @@ function handleAction(player, ghost) {
 	}
 	player.action = false;
 
-	if (!player.onFloor && player.dblJump) {
+	if (!player.onFloor && (player.dblJump && player.darkCount > 0)) {
 		if (player.acceleration > 0) {
 			player.acceleration = 0;
 		}
@@ -453,12 +478,8 @@ function handleAction(player, ghost) {
 			player.acceleration = -acceleration;
 			player.bottom += 40;
 		} else {
-			player.dblJump = true;
-			if (player.darkCount > 0) {
-				player.acceleration = -acceleration * 3 / 4;
-			} else {
-				player.acceleration = player.acceleration * 3 / 2;
-			}
+			player.dblJump = Date.now();
+			player.acceleration = -acceleration * 3 / 4;
 			player.darkCount--;
 			if (player.darkCount < darkCountLimit) {
 				player.darkCount = darkCountReboot;
