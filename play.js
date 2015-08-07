@@ -2,6 +2,18 @@
  *
  *
  *
+ * CURRENT GAME VERSION.
+ *
+ *
+ *
+ */
+
+var version = 1;
+
+/*
+ *
+ *
+ *
  * HELPERS
  *
  *
@@ -115,12 +127,18 @@ var bgBottomLimit = 100;
 var bgJitter = (bgTopLimit - bgBottomLimit) / 2;
 var bgMiddle = bgBottomLimit + bgJitter;
 
+// game difficulty
+var noVaryVariation = 0.8;
+var nextGapTileVariation = 0.6;
+var speedVariation = 1.1;
+var variationVariation = 1.3;
+
 // random generator
 var seed = 0;
 
 var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
 var twitterLink = "https://twitter.com/{user}/status/{id}";
-var highscoresUrl = "//cryptic-temple-1790.herokuapp.com/?";
+var highscoresUrl = "//gwoek.herokuapp.com/?";
 
 // highscores
 var highscores = {};
@@ -349,7 +367,7 @@ function renderPlayer(player, ghost, stage) {
 		}
 		context.fillStyle = ghost ? "transparent" : "rgba(0,0,0,0.05)";
 		context.strokeStyle = color;
-		context.lineWidth = 1;
+		context.lineWidth = ghost ? 1 : 3;
 		context.beginPath();
 		context.arc(player.dblJumpX, player.dblJumpY, dif, 0, 2 * Math.PI);
 		context.fill();
@@ -616,10 +634,10 @@ function updateEnv(stage, dif) {
 function lvlUp(game) {
 	game.lvlUp = true;
 	game.nextLevel += lvlupGap;
-	game.noVaryBase = game.noVaryBase * 0.9;
-	game.nextGapTileBase = game.nextGapTileBase * 0.9;
-	game.speed = game.speed * 1.1;
-	game.variationBase = game.variationBase * 1.1;
+	game.noVaryBase = game.noVaryBase * noVaryVariation;
+	game.nextGapTileBase = game.nextGapTileBase * nextGapTileVariation;
+	game.speed = game.speed * speedVariation;
+	game.variationBase = game.variationBase * variationVariation;
 	game.lvlUpTile = false;
 }
 
@@ -758,6 +776,7 @@ function start() {
 	// retrieve the top track as ghost
 	var query = new Parse.Query(Score);
 	query.equalTo("seed", seed);
+	query.equalTo("version", version);
 	query.descending("score");
 	query.limit(4);
 	setVisible(_loadingEl, true);
@@ -906,6 +925,7 @@ function showGameOver(score) {
 		saved.save({
 			seed: seed,
 			score: score,
+			version: version,
 			actions: stage.game.actions,
 			ACL: publicACL
 		}).then(function() {
@@ -918,11 +938,6 @@ function showGameOver(score) {
 	document.body.classList.add("gameover");
 	_twitterEl.href = "https://twitter.com/home?status=" +
 		encodeURIComponent(twitterMsg.replace(/\{score\}/g, score).replace(/\{seed\}/g, seed));
-
-	// 2s before restart with space
-	setTimeout(function() {
-		withSplash = true;
-	}, 2000);
 }
 
 function showHighScores() {
