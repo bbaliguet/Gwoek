@@ -10,5 +10,6 @@
 	"requirePaddingNewLinesAfterBlocks" : null,
 	"requireTrailingComma" : null,
 	"validateLineBreaks" : null,
-	"requirePaddingNewLinesBeforeLineComments" : null
+	"requirePaddingNewLinesBeforeLineComments" : null,
+	"requireCamelCaseOrUpperCaseIdentifiers" : null
 }

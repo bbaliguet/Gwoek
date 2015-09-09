@@ -1,7 +1,7 @@
-var http = require("http");
 var Twitter = require("twitter");
 var urlParse = require("url").parse;
 var Promise = require("promise");
+var express = require("express");
 
 var client = new Twitter({
 	consumer_key: process.env.TWITTER_CONSUMER_KEY,
@@ -42,7 +42,14 @@ function getTwitterPromise(score) {
 	});
 }
 
-http.createServer(function(req, res) {
+var app = express();
+
+app.get("/", function(req, res) {
+	res.redirect("/index.html");
+	res.end();
+});
+
+app.get("/scores", function(req, res) {
 	var query = urlParse(req.url, true).query;
 	var gwoekScores = query.score;
 
@@ -69,5 +76,8 @@ http.createServer(function(req, res) {
 	}, function(error) {
 		console.log(error);
 	});
+});
 
-}).listen(process.env.PORT || 5000);
+app.user(express.static("client"));
+
+app.listen(process.env.PORT || 5000);
