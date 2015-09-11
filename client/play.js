@@ -136,9 +136,9 @@ var variationVariation = 1.3;
 // random generator
 var seed = 0;
 
-var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: http://bbaliguet.github.io/Gwoek/#{seed} #Gwoek_{seed}_{score}";
+var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: https://gwoek.herokuapp.com/index.html#{seed} #Gwoek_{seed}_{score}";
 var twitterLink = "https://twitter.com/{user}/status/{id}";
-var highscoresUrl = "//gwoek.herokuapp.com/?";
+var highscoresUrl = "/scores?";
 
 // highscores
 var highscores = {};

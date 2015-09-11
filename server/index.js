@@ -78,6 +78,10 @@ app.get("/scores", function(req, res) {
 	});
 });
 
-app.user(express.static("client"));
+app.use(express.static("client"));
 
-app.listen(process.env.PORT || 5000);
+var server = app.listen(process.env.PORT || 5000, function() {
+	var host = server.address().address;
+	var port = server.address().port;
+	console.log("Gwoek listening at http://%s:%s", host, port);
+});
