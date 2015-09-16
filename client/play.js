@@ -460,6 +460,7 @@ function updateGround(ground, dif, game) {
 
 			// no variation for 10 cycles
 			game.noVary = game.noVaryBase + Math.floor(game.rand() * game.nextGapTileBase);
+
 		} else {
 			// update the noVary value
 			game.noVary--;
@@ -473,6 +474,9 @@ function updateGround(ground, dif, game) {
 			newTile.lvlUp = true;
 		}
 		ground.push(newTile);
+
+		// SOUNDS
+		mono1.note(55 * game.speed, 0.1);
 	}
 
 	return ground;
@@ -504,6 +508,12 @@ function handleAction(player, ghost) {
 			}
 		}
 	}
+
+	// SOUNDS
+	if (!ghost) {
+		mono2.note(player.bottom, player.dblJump ? 0.2 : 0.1);
+	}
+
 	return !ghost;
 }
 
