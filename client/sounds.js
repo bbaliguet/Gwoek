@@ -8,7 +8,7 @@ if (AudioContext) {
 	audioCtx = new AudioContext();
 	var gainNode = audioCtx.createGain();
 	gainNode.gain.value = 0.2;
-	gainNode.connect(audioCtx.destination);
+	// gainNode.connect(audioCtx.destination);
 
 	/* simplified Monotron from http://noisehack.com/ */
 	var Monotron = (function() {
