@@ -1,3 +1,5 @@
+/*global MersenneTwister:true*/
+
 /*
  *
  *
@@ -23,7 +25,7 @@ var version = 1;
 var $ = document.querySelector.bind(document);
 
 function setVisible(el, visible) {
-	el.style.display = visible ? "block" : "none";
+	el.style.display = visible ? 'block' : 'none';
 }
 
 function jitter(origin, value, randFn) {
@@ -32,14 +34,6 @@ function jitter(origin, value, randFn) {
 		rand = randFn(rand);
 	}
 	return origin + value * rand - value / 2;
-}
-
-// same as jitter, but push for extrem values
-function jitterOnBorders(origin, value) {
-	var rand = Math.random();
-	rand = rand - 0.5;
-	rand = rand * rand * 4;
-	return jitter(origin, value, rand);
 }
 
 function log(msg, obj) {
@@ -51,7 +45,7 @@ function log(msg, obj) {
 
 function getJSON(url, callback) {
 	var request = new XMLHttpRequest();
-	request.open("GET", url, true);
+	request.open('GET', url, true);
 	request.onreadystatechange = function() {
 		if (request.readyState != 4 || request.status != 200) {
 			return;
@@ -62,8 +56,8 @@ function getJSON(url, callback) {
 }
 
 // redirect to https
-if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
-	window.location.protocol = "https:";
+if (window.location.protocol == 'http:' && window.location.hostname != 'localhost') {
+	window.location.protocol = 'https:';
 }
 
 /*
@@ -76,18 +70,17 @@ if (window.location.protocol == "http:" && window.location.hostname != "localhos
  *
  */
 
-var _scoreEl = $("#score");
-var _topScoreEl = $("#topscore");
-var _twitterEl = $("#twitter");
-var _gameOverEl = $("#gameover");
-var _splashEl = $("#splash");
-var _lvlUpEl = $("#lvlUp");
-var _loadingEl = $("#loading");
-var _highscores = $("#highscores");
-var _highscoresShow = $("#highscoresShow");
+var _scoreEl = $('#score');
+var _topScoreEl = $('#topscore');
+var _twitterEl = $('#twitter');
+var _gameOverEl = $('#gameover');
+var _splashEl = $('#splash');
+var _lvlUpEl = $('#lvlUp');
+var _loadingEl = $('#loading');
+var _highscoresShow = $('#highscoresShow');
 
 // canvas
-var _canvasEl = $("#canvas");
+var _canvasEl = $('#canvas');
 
 /*
  *
@@ -117,7 +110,6 @@ var colorTimeout = 500;
 var backgroundSpeed = 4;
 var darkCountReboot = 5;
 var darkCountLimit = -1;
-var twopi = Math.PI * 2;
 
 // limits for random ground generation
 var topLimit = 300;
@@ -136,30 +128,12 @@ var variationVariation = 1.3;
 // random generator
 var seed = 0;
 
-var twitterMsg = "Just scored {score} on @GwoekGame! Challenge me now: https://gwoek.herokuapp.com/index.html#{seed} #Gwoek_{seed}_{score}";
-var twitterLink = "https://twitter.com/{user}/status/{id}";
-var highscoresUrl = "/scores?";
+var twitterMsg = 'Just scored {score} on @GwoekGame! Challenge me now: https://gwoek.herokuapp.com/index.html#{seed} #Gwoek_{seed}_{score}';
+var twitterLink = 'https://twitter.com/{user}/status/{id}';
+var highscoresUrl = '/scores?';
 
 // highscores
 var highscores = {};
-
-/*
- *
- *
- *
- * PARSE
- *
- *
- *
- */
-
-if (window.Parse) {
-	// parse saving
-	var Score = Parse.Object.extend("Score");
-	var publicACL = new Parse.ACL();
-	publicACL.setPublicReadAccess(true);
-	publicACL.setPublicWriteAccess(false);
-}
 
 /*
  *
@@ -198,9 +172,9 @@ Clock.prototype.total = function() {
  */
 
 function applyCellShadingStyle(context) {
-	context.strokeStyle = "rgba(255,255,255,1)";
+	context.strokeStyle = 'rgba(255,255,255,1)';
 	context.lineWidth = 8;
-	context.shadowColor = "rgba(0,0,0,0.5)";
+	context.shadowColor = 'rgba(0,0,0,0.5)';
 	context.shadowBlur = 15;
 	context.shadowOffsetX = 0;
 	context.shadowOffsetY = 10;
@@ -208,7 +182,7 @@ function applyCellShadingStyle(context) {
 
 function applyStandardStyle(context) {
 	context.lineWidth = 0;
-	context.shadowColor = "rgba(0,0,0,0.5)";
+	context.shadowColor = 'rgba(0,0,0,0.5)';
 	context.shadowBlur = 5;
 	context.shadowOffsetX = 0;
 	context.shadowOffsetY = 2;
@@ -222,14 +196,39 @@ function applyNoStyle(context) {
 }
 
 function renderPrepare() {
-	var context = _canvasEl.getContext("2d");
+	var context = _canvasEl.getContext('2d');
 	context.clearRect(0, 0, viewport.width, viewport.height);
 }
 
-function renderGround(stage, background) {
+function renderPlayerPath(context, player, ghost) {
+	var onFloor = player.onFloor;
+	var scale = onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
+	var xPos = player.left;
+	var yPos = viewport.height - player.bottom + (!ghost ? 2 : 0);
+	var size = ghost ? 12 : 16;
 
+	context.moveTo(xPos, yPos);
+
+	if (player.darkCount > 0) {
+		context.lineTo(xPos - size, yPos - size * scale);
+		context.lineTo(xPos, yPos - size * 2);
+		context.lineTo(xPos + size, yPos - size * scale);
+	} else {
+		context.lineTo(xPos - size, yPos - size - scale * size / 2);
+		context.lineTo(xPos, yPos - size);
+		context.lineTo(xPos + size, yPos - size - scale * size / 2);
+	}
+
+	context.lineTo(xPos, yPos);
+	return {
+		xPos: xPos,
+		yPos: yPos
+	};
+}
+
+function renderGround(stage, background) {
 	var ground = stage.ground;
-	var context = _canvasEl.getContext("2d");
+	var context = _canvasEl.getContext('2d');
 	var nbTiles = ground.length;
 
 	var playerRendered = false;
@@ -267,7 +266,7 @@ function renderGround(stage, background) {
 		yPos = viewport.height - yPos;
 		if (yPos != lastGroundY || item.lvlUp) {
 			context.lineTo(xPos, yPos);
-			lastGround = yPos;
+			lastGroundY = yPos;
 		}
 
 		// lvl limit
@@ -280,10 +279,12 @@ function renderGround(stage, background) {
 		}
 
 		// player on this ground
-		if (background && !playerRendered && playerXPos >= xPos && playerXPos - xPos < tileWidth && playerOnFloor) {
-			playerRendered = true;
-			renderPlayerPath(context, player);
-			context.moveTo(xPos, yPos);
+		if (background && !playerRendered && playerOnFloor) {
+			if (playerXPos >= xPos && playerXPos - xPos < tileWidth) {
+				playerRendered = true;
+				renderPlayerPath(context, player);
+				context.moveTo(xPos, yPos);
+			}
 		}
 	});
 
@@ -301,41 +302,13 @@ function renderGround(stage, background) {
 		context.closePath();
 		context.stroke();
 	}
-
-}
-
-function renderPlayerPath(context, player, ghost) {
-	var onFloor = player.onFloor;
-	var scale = onFloor ? 1 : 1 + 1 / (Math.abs(player.acceleration / 10) + 1);
-	var xPos = player.left;
-	var yPos = viewport.height - player.bottom + (!ghost ? 2 : 0);
-	var size = ghost ? 12 : 16;
-
-	context.moveTo(xPos, yPos);
-
-	if (player.darkCount > 0) {
-		context.lineTo(xPos - size, yPos - size * scale);
-		context.lineTo(xPos, yPos - size * 2);
-		context.lineTo(xPos + size, yPos - size * scale);
-	} else {
-		context.lineTo(xPos - size, yPos - size - scale * size / 2);
-		context.lineTo(xPos, yPos - size);
-		context.lineTo(xPos + size, yPos - size - scale * size / 2);
-	}
-
-	context.lineTo(xPos, yPos);
-	return {
-		xPos: xPos,
-		yPos: yPos
-	};
 }
 
 function renderPlayer(player, ghost, stage) {
-
 	var color = stage.groundColor;
 	var onFloor = player.onFloor;
 	var dblJump = player.dblJump;
-	var context = _canvasEl.getContext("2d");
+	var context = _canvasEl.getContext('2d');
 
 	context.beginPath();
 
@@ -347,11 +320,10 @@ function renderPlayer(player, ghost, stage) {
 		} else {
 			applyStandardStyle(context);
 		}
-		context.fillStyle = ghost ? "rgba(0,0,0,0.1)" : color;
-
+		context.fillStyle = ghost ? 'rgba(0,0,0,0.1)' : color;
 	} else {
 		applyStandardStyle(context);
-		context.fillStyle = ghost ? "rgba(255,255,255,0.1)" : color;
+		context.fillStyle = ghost ? 'rgba(255,255,255,0.1)' : color;
 	}
 
 	var pos = renderPlayerPath(context, player, ghost);
@@ -365,7 +337,7 @@ function renderPlayer(player, ghost, stage) {
 			player.dblJumpX = pos.xPos;
 			player.dblJumpY = pos.yPos - 15;
 		}
-		context.fillStyle = ghost ? "transparent" : "rgba(0,0,0,0.05)";
+		context.fillStyle = ghost ? 'transparent' : 'rgba(0,0,0,0.05)';
 		context.strokeStyle = color;
 		context.lineWidth = ghost ? 1 : 3;
 		context.beginPath();
@@ -380,10 +352,11 @@ function renderPlayer(player, ghost, stage) {
 
 function renderBackground(stage) {
 	var background = stage.background;
-	var context = _canvasEl.getContext("2d");
+	var context = _canvasEl.getContext('2d');
 
 	// create gradient
-	var gradient = context.createLinearGradient(0, viewport.height - bgBottomLimit, 0, viewport.height - bgTopLimit);
+	var vHeight = viewport.height;
+	var gradient = context.createLinearGradient(0, vHeight - bgBottomLimit, 0, vHeight - bgTopLimit);
 	gradient.addColorStop(0, stage.backColor1);
 	gradient.addColorStop(1, stage.backColor2);
 
@@ -430,18 +403,18 @@ function updateGround(ground, dif, game) {
 	var nbTiles = ground.length;
 
 	// adjust ground left
-	ground.forEach(function(item, index) {
+	ground.forEach(function(item) {
 		item.left -= dif * game.speed;
 	});
 
 	// filter out of view tiles
-	ground = ground.filter(function(item) {
+	var newGround = ground.filter(function(item) {
 		return item.left > -tileWidth;
 	});
 
 	// insert new tiles
-	while (ground.length < nbTiles) {
-		var lastTile = ground[ground.length - 1];
+	while (newGround.length < nbTiles) {
+		var lastTile = newGround[newGround.length - 1];
 		var newTile = {
 			left: lastTile.left + tileWidth
 		};
@@ -460,7 +433,6 @@ function updateGround(ground, dif, game) {
 
 			// no variation for 10 cycles
 			game.noVary = game.noVaryBase + Math.floor(game.rand() * game.nextGapTileBase);
-
 		} else {
 			// update the noVary value
 			game.noVary--;
@@ -473,17 +445,13 @@ function updateGround(ground, dif, game) {
 			game.lvlUpTile = true;
 			newTile.lvlUp = true;
 		}
-		ground.push(newTile);
-
-		// SOUNDS
-		mono1.note(55 * game.speed, 0.1);
+		newGround.push(newTile);
 	}
 
-	return ground;
+	return newGround;
 }
 
 function handleAction(player, ghost) {
-
 	if (!player.action) {
 		return false;
 	}
@@ -508,17 +476,10 @@ function handleAction(player, ghost) {
 			}
 		}
 	}
-
-	// SOUNDS
-	if (!ghost) {
-		mono2.note(player.bottom, player.dblJump ? 0.2 : 0.1);
-	}
-
 	return !ghost;
 }
 
 function updatePlayer(player, dif, game, ground) {
-
 	if (player.out) {
 		return;
 	}
@@ -560,9 +521,8 @@ function updatePlayer(player, dif, game, ground) {
 
 			gameOver = true;
 			return;
-		} else {
-			player.bottom = playerTile.height;
 		}
+		player.bottom = playerTile.height;
 	}
 
 	if (!tileContact) {
@@ -580,7 +540,7 @@ function updatePlayer(player, dif, game, ground) {
 	}
 }
 
-function updateBackground(background, dif, game) {
+function updateBackground(background, dif) {
 	var outOfScreen = 0;
 	// update left and count out of screen
 	background.forEach(function(point) {
@@ -660,13 +620,13 @@ function colorize(stage) {
 	}
 	// generate a random color
 	var color = Math.floor(Math.random() * 360);
-	var light = darkColor ? "7%" : "80%";
-	document.body.style.backgroundColor = "hsl(" + color + ", 100%, " + light + ")";
+	var light = darkColor ? '7%' : '80%';
+	document.body.style.backgroundColor = 'hsl(' + color + ', 100%, ' + light + ')';
 
 	stage.color = [color, light, darkColor, now + colorTimeout];
-	stage.groundColor = "hsl(" + color + ",100%," + (darkColor ? "5" : "70") + "%)";
-	stage.backColor1 = "hsl(" + color + ",100%," + (darkColor ? "7" : "80") + "%)";
-	stage.backColor2 = "hsl(" + color + ",100%," + (darkColor ? "27" : "60") + "%)";
+	stage.groundColor = 'hsl(' + color + ',100%,' + (darkColor ? '5' : '70') + '%)';
+	stage.backColor1 = 'hsl(' + color + ',100%,' + (darkColor ? '7' : '80') + '%)';
+	stage.backColor2 = 'hsl(' + color + ',100%,' + (darkColor ? '27' : '60') + '%)';
 }
 
 /*
@@ -679,8 +639,30 @@ function colorize(stage) {
  *
  */
 
-function loop() {
+function showGameOver(score) {
+	if (score > topScore) {
+		topScore = score;
+		_topScoreEl.innerHTML = 'Top score: ' + topScore;
+	}
 
+	// save to highscores
+	if (!highscores[seed]) {
+		highscores[seed] = {};
+	}
+	highscores[seed][score] = {
+		actions: stage.game.actions,
+		score: score,
+		you: true
+	};
+
+	setVisible(_gameOverEl, true);
+	_lvlUpEl.classList.remove('show');
+	document.body.classList.add('gameover');
+	_twitterEl.href = 'https://twitter.com/home?status=' +
+		encodeURIComponent(twitterMsg.replace(/\{score\}/g, score).replace(/\{seed\}/g, seed));
+}
+
+function loop() {
 	var clock = stage.clock;
 	if (!clock) {
 		clock = new Clock();
@@ -706,7 +688,6 @@ function loop() {
 	// update the environment
 	do {
 		if (dif) {
-
 			if (!gameOver) {
 				total += chunk;
 				game.total = total;
@@ -727,7 +708,6 @@ function loop() {
 				showGameOver(total);
 				return;
 			}
-
 		}
 		dif = dif - chunk;
 		if (dif < 0) {
@@ -740,9 +720,9 @@ function loop() {
 
 	if (game.lvlUp) {
 		game.lvlUp = false;
-		_lvlUpEl.classList.add("show");
+		_lvlUpEl.classList.add('show');
 		setTimeout(function() {
-			_lvlUpEl.classList.remove("show");
+			_lvlUpEl.classList.remove('show');
 		}, 1500);
 	}
 
@@ -751,7 +731,7 @@ function loop() {
 		colorize(stage);
 	}
 
-	_scoreEl.innerHTML = "score: " + Math.floor(total);
+	_scoreEl.innerHTML = 'score: ' + Math.floor(total);
 
 	requestAnimationFrame(loop);
 }
@@ -785,9 +765,9 @@ function start() {
 
 	// retrieve the top track as ghost
 	var query = new Parse.Query(Score);
-	query.equalTo("seed", seed);
-	query.equalTo("version", version);
-	query.descending("score");
+	query.equalTo('seed', seed);
+	query.equalTo('version', version);
+	query.descending('score');
 	query.limit(4);
 	setVisible(_loadingEl, true);
 
@@ -804,7 +784,7 @@ function start() {
 		if (!started) {
 			results.forEach(function(result) {
 				var player = getPlayer();
-				player.actions = result.get("actions") || [];
+				player.actions = result.get('actions') || [];
 				player.ghost = true;
 				stage.players.push(player);
 			});
@@ -817,8 +797,8 @@ function start() {
 			highscores[seed] = trackHighscores;
 		}
 		results.forEach(function(result) {
-			var score = result.get("score");
-			keys.push("score=" + seed + "_" + score);
+			var score = result.get('score');
+			keys.push('score=' + seed + '_' + score);
 			var scoreObj = trackHighscores[score];
 			if (!scoreObj) {
 				scoreObj = {
@@ -826,13 +806,15 @@ function start() {
 				};
 				trackHighscores[score] = scoreObj;
 			}
-			scoreObj.actions = result.get("actions");
+			scoreObj.actions = result.get('actions');
 		});
 		if (keys.length) {
-			getJSON(highscoresUrl + keys.join("&"), function(scores) {
+			getJSON(highscoresUrl + keys.join('&'), function(scores) {
 				for (var key in scores) {
-					var splitKey = key.split("_");
-					trackHighscores[splitKey[1]].tweet = scores[key];
+					if (scores.hasOwnProperty(key)) {
+						var splitKey = key.split('_');
+						trackHighscores[splitKey[1]].tweet = scores[key];
+					}
 				}
 			});
 		}
@@ -845,7 +827,7 @@ function start() {
 }
 
 function init() {
-	document.body.classList.remove("gameover");
+	document.body.classList.remove('gameover');
 	setVisible(_gameOverEl, false);
 	setVisible(_splashEl, false);
 
@@ -893,13 +875,13 @@ function init() {
 	// init rand method. Use seed if provided
 	var hash = parseInt(window.location.hash.substr(1), 10);
 	seed = isNaN(hash) ? Math.floor(Math.random() * 100000000) : hash;
-	log("Gwoek playing with seed " + seed);
+	log('Gwoek playing with seed ' + seed);
 
 	var generator = new MersenneTwister(seed);
 	stage.game.rand = function() {
 		return generator.random();
 	};
-	window.location.hash = "#" + seed;
+	window.location.hash = '#' + seed;
 
 	// init canvas
 	_canvasEl.width = viewport.width;
@@ -908,51 +890,9 @@ function init() {
 	start();
 }
 
-function showGameOver(score) {
-	ga("send", "event", "score", "session", "Score", score);
-	if (score > topScore) {
-		topScore = score;
-		_topScoreEl.innerHTML = "Top score: " + topScore;
-		// save to ga
-		if (window.ga) {
-			ga("send", "event", "score", "top", "Top score", topScore);
-		}
-	}
-
-	// save to highscores
-	if (!highscores[seed]) {
-		highscores[seed] = {};
-	}
-	highscores[seed][score] = {
-		actions: stage.game.actions,
-		score: score,
-		you: true
-	};
-
-	if (window.Parse) {
-		// save to parse
-		var saved = new Score();
-		saved.save({
-			seed: seed,
-			score: score,
-			version: version,
-			actions: stage.game.actions,
-			ACL: publicACL
-		}).then(function() {
-			log("Score " + score + " for seed " + seed + " saved.");
-		});
-	}
-
-	setVisible(_gameOverEl, true);
-	_lvlUpEl.classList.remove("show");
-	document.body.classList.add("gameover");
-	_twitterEl.href = "https://twitter.com/home?status=" +
-		encodeURIComponent(twitterMsg.replace(/\{score\}/g, score).replace(/\{seed\}/g, seed));
-}
-
 function showHighScores() {
 	var trackHighscores = highscores[seed];
-	var orderedHighscores = Object.keys(trackHighscores)
+	Object.keys(trackHighscores)
 		.map(parseFloat)
 		.sort(function(a, b) {
 			return b - a;
@@ -960,21 +900,21 @@ function showHighScores() {
 		.map(function(key) {
 			return trackHighscores[key];
 		}).forEach(function(result, index) {
-			var line = $("#trackscores tr:nth-child(" + (index + 1) + ")");
+			var line = $('#trackscores tr:nth-child(' + (index + 1) + ')');
 			if (!line) {
 				return;
 			}
-			var by = "- - -";
-			var img = "";
+			var by = '- - -';
+			var img = '';
 			var tweet = result.tweet;
 			if (result.you) {
-				by = "YOU!";
+				by = 'YOU!';
 			} else if (tweet) {
 				var url = twitterLink.replace(/\{user\}/g, tweet.user).replace(/\{id\}/g, tweet.id);
-				by = "<a href=\"" + url + "\">@" + tweet.user + "</a>";
-				img = "<img src=\"" + tweet.img + "\"/>";
+				by = '<a href=\'' + url + '\'>@' + tweet.user + '</a>';
+				img = '<img src=\'' + tweet.img + '\'/>';
 			}
-			line.innerHTML = "<td>" + img + "</td><td>" + result.score + "</td><td> by </td><td>" + by + "</td>";
+			line.innerHTML = '<td>' + img + '</td><td>' + result.score + '</td><td> by </td><td>' + by + '</td>';
 		});
 	setVisible(_gameOverEl, false);
 	setVisible(_highscoresShow, true);
@@ -1013,43 +953,37 @@ function bindAction(element, listener) {
 		event.preventDefault();
 		listener();
 	};
-	element.addEventListener("click", wrapper);
-	element.addEventListener("touchstart", wrapper);
+	element.addEventListener('click', wrapper);
+	element.addEventListener('touchstart', wrapper);
 }
 
-document.addEventListener("DOMContentLoaded", function(e) {
+document.addEventListener('DOMContentLoaded', function() {
 	// event listeners
-	document.addEventListener("keydown", onAction);
-	document.addEventListener("touchstart", function(e) {
+	document.addEventListener('keydown', onAction);
+	document.addEventListener('touchstart', function(e) {
 		e.preventDefault();
 		onAction();
 	});
 
 	// update on resize
-	window.addEventListener("resize", function() {
+	window.addEventListener('resize', function() {
 		if (!withSplash) {
 			init();
 		}
 	});
 
 	// retry and try new
-	function onRetry(event) {
+	function onRetry() {
 		init();
 	}
 
-	function onTryNew(event) {
-		window.location.hash = "";
+	function onTryNew() {
+		window.location.hash = '';
 		init();
 	}
 
-	bindAction($("#retry"), onRetry);
-	bindAction($("#trynew"), onTryNew);
-	bindAction($("#highscores"), showHighScores);
-	bindAction($("#highscoresShow"), hideHighScores);
-
-	if (window.Parse) {
-		// Start Parse for scores and renderPlayer
-		Parse.initialize("zQmQG1Bj9kRsAieCxyAqulbHFZeDWcHuXp9051y3", "k0VfXT2he22Kseb1yw7YciqUaAJK68Sc0sxoRBbN");
-	}
-
+	bindAction($('#retry'), onRetry);
+	bindAction($('#trynew'), onTryNew);
+	bindAction($('#highscores'), showHighScores);
+	bindAction($('#highscoresShow'), hideHighScores);
 });
