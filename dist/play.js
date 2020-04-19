@@ -61,7 +61,7 @@ function showGameOver(score) {
     seedHighScores.push({
         actions, score, external: false
     });
-    seedHighScores.sort((a, b) => (a.external ? 1 : b.external ? -1 : b.score - a.score));
+    seedHighScores.sort((a, b) => (a.external ? -1 : b.external ? 1 : b.score - a.score));
     if (seedHighScores.length > 6) {
         seedHighScores.length = 6;
     }
@@ -169,7 +169,9 @@ function init() {
             }];
     }
     console.log('Gwoek playing with seed ' + seed);
-    window.location.hash = '#' + seed;
+    if (isNaN(hash)) {
+        window.location.hash = '#' + seed;
+    }
     stage = new Stage(viewport, seed);
     // insert ghost
     if (highscores[seed]) {

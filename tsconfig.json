@@ -3,8 +3,7 @@
         "target": "es6",
         "outDir": "dist/",
         "module": "es6",
-        "sourceMap": true,
-        "watch": true
+        "sourceMap": true
     },
     "exclude": [
         "node_modules"
