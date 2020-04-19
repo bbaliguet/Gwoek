@@ -30,8 +30,7 @@ a {
 #score,
 #splash,
 #topscore,
-#lvlup,
-#loading {
+#lvlup {
     position: absolute;
     width: 100%;
     text-align: center;
@@ -39,8 +38,7 @@ a {
 }
 
 #gameover,
-#lvlup,
-#loading {
+#lvlup {
     top: 30vh;
     display: none;
     font-size: 8vmin;
@@ -123,6 +121,13 @@ a {
 
 #highscoresShow td {
     padding: 1vmin 2vmin;
+    font-size: 3vmin;
+    text-shadow: 0px 1px 0px black,
+        0px 2px 0px black;
+}
+#highscoresShow td.external {
+    color: rgba(255,255,255,0.4);
+    text-shadow: none;
 }
 
 #highscoresShow img {

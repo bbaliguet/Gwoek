@@ -1,5 +1,8 @@
 # Gwoek
+
 Jump Game From Nogent The Big Hole.
+
+* V3. No backend, local ghost mode.
 
 * V2. Not so much coded over night. Added some backend for ghost mode.
 
