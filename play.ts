@@ -76,7 +76,7 @@ function showGameOver(score: number): void {
 		actions, score, external: false
 	});
 
-	seedHighScores.sort((a, b) => (a.external ? 1 : b.external ? -1 : b.score - a.score));
+	seedHighScores.sort((a, b) => (a.external ? -1 : b.external ? 1 : b.score - a.score));
 	if (seedHighScores.length > 6) {
 		seedHighScores.length = 6;
 	}
