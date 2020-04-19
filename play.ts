@@ -205,8 +205,9 @@ function init(): void {
 	}
 	console.log('Gwoek playing with seed ' + seed);
 
-
-	window.location.hash = '#' + seed;
+	if (isNaN(hash)) {
+		window.location.hash = '#' + seed;
+	}
 
 	stage = new Stage(viewport, seed);
 
