@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/0cb525f5-ad9f-4d5b-9bbe-fa2229cf117d/deploy-status)](https://app.netlify.com/sites/gwoek/deploys)
+
 # Gwoek
 
 Jump Game From Nogent The Big Hole.
