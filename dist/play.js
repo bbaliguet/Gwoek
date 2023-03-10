@@ -61,7 +61,7 @@ function showGameOver(score) {
     seedHighScores.push({
         actions, score, external: false
     });
-    seedHighScores.sort((a, b) => (a.external ? -1 : b.external ? 1 : b.score - a.score));
+    seedHighScores.sort((a, b) => (a.external ? 1 : b.external ? -1 : b.score - a.score));
     if (seedHighScores.length > 6) {
         seedHighScores.length = 6;
     }
@@ -175,7 +175,7 @@ function init() {
     stage = new Stage(viewport, seed);
     // insert ghost
     if (highscores[seed]) {
-        highscores[seed].forEach(score => {
+        highscores[seed].forEach((score) => {
             const player = new Player();
             player.actions = score.actions;
             player.ghost = true;

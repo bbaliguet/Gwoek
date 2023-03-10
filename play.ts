@@ -45,6 +45,11 @@ const twitterMsg = 'Just scored {score} on @GwoekGame! Challenge me now: https:/
 
 // highscores
 const highscores = {};
+interface Score {
+	external: boolean;
+	actions: Array<number>;
+	score: number;
+}
 
 /*
  *
@@ -76,7 +81,7 @@ function showGameOver(score: number): void {
 		actions, score, external: false
 	});
 
-	seedHighScores.sort((a, b) => (a.external ? -1 : b.external ? 1 : b.score - a.score));
+	seedHighScores.sort((a: Score, b: Score) => (a.external ? 1 : b.external ? -1 : b.score - a.score));
 	if (seedHighScores.length > 6) {
 		seedHighScores.length = 6;
 	}
@@ -99,7 +104,7 @@ function loop(): void {
 
 	let total = clock.total();
 	let dif = clock.tick(chunk);
-	
+
 	const updateGhost = function(player: Player): void {
 		if (!player.ghost) {
 			return;
@@ -213,7 +218,7 @@ function init(): void {
 
 	// insert ghost
 	if (highscores[seed]) {
-		highscores[seed].forEach(score => {
+		highscores[seed].forEach((score: Score) => {
 			const player = new Player();
 			player.actions = score.actions;
 			player.ghost = true;

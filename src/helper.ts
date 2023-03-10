@@ -35,7 +35,7 @@ export function parseActions(actions: string): Array<number> {
     let last = 0;
     const parsed = [];
     for(let i = 0; i< actions.length; i += 2) {
-        last += parseInt(actions.substr(i,2), 36) * 10;
+        last += parseInt(actions.substring(i,2), 36) * 10;
         parsed.push(last);
     }
     return parsed;
